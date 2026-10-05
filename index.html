@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16261F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tim HB">
+<title>Tim Hungry Bird</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2316261F'/><text x='50' y='66' font-size='46' text-anchor='middle' fill='%23F6D365' font-family='Arial' font-weight='bold'>HB</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16261F; --leaf:#2E6B4E; --paper:#F4F6F4; --card:#FFFFFF; --line:#DCE3DE; --mute:#5E6E66; --danger:#B3261E;
+    --P:#F6D365; --PI:#E9B949; --M:#B9D3DE; --S:#F7B69A; --SC:#F2C38B; --L:#2C2F2D; --SK:#D9C6F0; --C:#BFE3C8;
+    --display:'Bricolage Grotesque', 'Arial Narrow', sans-serif;
+    --body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+  button{font:inherit;color:inherit;cursor:pointer}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+  header.top{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
+  header.top .in{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+  .brand small{display:block;font-family:var(--body);font-weight:400;font-size:13px;opacity:.75;letter-spacing:0}
+  .icon-btn{background:transparent;border:1px solid rgba(255,255,255,.35);border-radius:10px;padding:8px 12px;font-size:14px}
+  h2{font-family:var(--display);font-weight:800;font-size:22px;margin:22px 0 10px;letter-spacing:-.01em}
+  .muted{color:var(--mute);font-size:14px}
+  /* ticket hari ini */
+  .ticket{margin-top:18px;border-radius:18px;padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:4px 18px;align-items:center;border:2px solid var(--ink)}
+  .ticket .code{grid-row:1/4;font-family:var(--display);font-weight:800;font-size:76px;line-height:.9;letter-spacing:-.04em}
+  .ticket .lbl{font-size:14px;opacity:.8}
+  .ticket .jam{font-family:var(--display);font-weight:600;font-size:26px;letter-spacing:-.01em}
+  .ticket .note{font-size:14px}
+  .next{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line);font-size:15px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .stat b{display:block;font-family:var(--display);font-size:24px}
+  .stat span{font-size:12px;color:var(--mute)}
+  .day{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+  .day.past{opacity:.45}
+  .day.today{background:var(--card);border-radius:12px;border:2px solid var(--ink);padding:10px}
+  .day .d{font-family:var(--display);font-weight:600;font-size:15px;line-height:1.1}
+  .day .d small{display:block;font-family:var(--body);font-weight:400;font-size:12px;color:var(--mute)}
+  .chip{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:30px;padding:0 8px;border-radius:8px;font-weight:700;font-size:14px;border:1px solid rgba(0,0,0,.08)}
+  .chip.L{color:#fff}
+  .soon{margin:22px 0 0;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;font-size:14px;color:var(--mute)}
+  /* tim */
+  .bar{display:flex;gap:8px;align-items:center;margin:14px 0 8px}
+  .bar input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit}
+  .seg{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+  .seg button{white-space:nowrap;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:14px}
+  .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .weeknav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+  .weeknav button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px}
+  .weeknav b{font-family:var(--display);font-size:17px}
+  .summary{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;font-size:14px}
+  .summary .chip{height:26px;font-size:13px}
+  .gridwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+  table{border-collapse:separate;border-spacing:0;width:100%}
+  th,td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line)}
+  th{font-size:12px;font-weight:700;color:var(--mute);background:var(--card);position:sticky;top:0}
+  th.today{color:var(--ink);background:#EAF2EC}
+  td.today{background:#F3F8F4}
+  .namecol{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;padding-left:10px;min-width:118px;max-width:118px;border-right:1px solid var(--line)}
+  .namecol div{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .namecol small{font-size:11px;color:var(--mute);white-space:nowrap}
+  tr.mine .namecol{box-shadow:inset 4px 0 0 var(--leaf)}
+  td .chip{min-width:36px;height:28px;font-size:13px}
+  td.edit .chip{cursor:pointer;outline:1px dashed rgba(22,38,31,.35);outline-offset:2px}
+  td.pick .chip{outline:3px solid var(--leaf);outline-offset:2px}
+  .swapbar{position:sticky;top:64px;z-index:4;background:var(--leaf);color:#fff;border-radius:12px;padding:10px 12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+  .swapbar button{background:#fff;color:var(--ink);border:0;border-radius:8px;padding:6px 10px}
+  /* riwayat */
+  .log{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+  .log .h{display:flex;justify-content:space-between;font-size:13px;color:var(--mute)}
+  .log .b{margin:4px 0;font-weight:700}
+  .log .a{font-size:14px}
+  /* form */
+  .field{display:block;margin:12px 0}
+  .field span{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font:inherit;background:var(--card)}
+  .btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-weight:700;font-size:16px;background:var(--ink);color:#fff;margin-top:12px}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .btn.danger{background:var(--card);color:var(--danger);border:1px solid var(--line)}
+  .btn:disabled{opacity:.5}
+  .err{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
+  .note-box{background:#FFF6D6;border:1px solid #EED690;border-radius:12px;padding:12px;font-size:14px;margin-top:14px}
+  /* login */
+  .login{min-height:100vh;display:flex;flex-direction:column;justify-content:center;max-width:420px;margin:0 auto;padding:24px}
+  .login h1{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;letter-spacing:-.03em;margin:0 0 6px}
+  .stripe{display:flex;gap:6px;margin:0 0 26px}
+  .stripe i{height:10px;flex:1;border-radius:3px}
+  /* nav bawah */
+  nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+  nav.bottom .in{max-width:560px;margin:0 auto;display:flex}
+  nav.bottom button{flex:1;background:none;border:0;padding:8px 4px;border-radius:10px;font-size:13px;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:2px}
+  nav.bottom button svg{width:22px;height:22px}
+  nav.bottom button.on{color:var(--ink);font-weight:700;background:#EAF2EC}
+  /* sheet */
+  .scrim{position:fixed;inset:0;background:rgba(22,38,31,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:var(--paper);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+  .sheet h3{font-family:var(--display);font-weight:800;font-size:20px;margin:0}
+  .codes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .codes button{border:2px solid transparent;border-radius:12px;padding:10px 4px;font-weight:700;font-size:15px}
+  .codes button small{display:block;font-weight:400;font-size:11px}
+  .codes button.on{border-color:var(--ink)}
+  .quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .quick button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 10px;font-size:13px}
+  .swapview{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:12px;text-align:center}
+  .swapview .side{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px}
+  .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90vw}
+  .loading{padding:60px 0;text-align:center;color:var(--mute)}
+  @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ===== KONFIGURASI: tempel URL Web App Apps Script di sini ===== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbw--1MvzLx_fYtRyQ-ns4p_Z_feKtkCZb1-X3i0XPGg7lHy33LxotKr6KzXFq4TOlzUaQ/exec';
+
+const HARI = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const HARI_PANJANG = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const ALASAN = ['Sakit','Tukar shift','Tukar libur','Permintaan staf','Kebutuhan operasional'];
+
+let S = {
+  token: localStorage.getItem('hr_token') || '',
+  me: JSON.parse(localStorage.getItem('hr_me') || 'null'),
+  pinAwal: localStorage.getItem('hr_pinawal') === '1',
+  data: null, view: 'saya', week: 0, div: 'Semua', q: '', swapA: null, audit: null
+};
+const $app = document.getElementById('app');
+
+/* ===== API (JSONP) ===== */
+function api(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = 'hb' + Date.now() + Math.floor(Math.random() * 1e5);
+    const el = document.createElement('script');
+    const timer = setTimeout(() => { done(); reject(new Error('Koneksi lambat. Coba lagi.')); }, 25000);
+    function done() { clearTimeout(timer); delete window[cb]; el.remove(); }
+    window[cb] = (r) => {
+      done();
+      if (r.ok) return resolve(r.data);
+      const msg = String(r.error || 'Terjadi kesalahan.');
+      if (msg.startsWith('SESI:')) logoutLocal();
+      reject(new Error(msg.replace(/^SESI:\s*/, '')));
+    };
+    const q = new URLSearchParams(Object.assign({}, params, { action, callback: cb }));
+    if (S.token && !q.has('token')) q.set('token', S.token);
+    el.src = API_URL + '?' + q.toString();
+    el.onerror = () => { done(); reject(new Error('Tidak bisa terhubung ke server.')); };
+    document.body.appendChild(el);
+  });
+}
+
+/* ===== UTIL ===== */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+const toDate = iso => { const [y,m,d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
+const tglPendek = iso => { const d = toDate(iso); return d.getDate() + ' ' + BLN[d.getMonth()]; };
+const tglPanjang = iso => { const d = toDate(iso); return HARI_PANJANG[d.getDay()] + ', ' + d.getDate() + ' ' + BLN[d.getMonth()]; };
+const titleCase = s => String(s).toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+const kodeInfo = k => (S.data && S.data.kode.find(x => x.kode === k)) || null;
+function chip(k) {
+  const kk = (k || '').toUpperCase();
+  const known = ['P','PI','M','S','SC','L','SK','C'].includes(kk);
+  return `<span class="chip ${known ? kk : ''}" style="background:${known ? 'var(--' + kk + ')' : '#eee'}">${esc(kk || '–')}</span>`;
+}
+function jamText(k) {
+  const i = kodeInfo(k);
+  if (!i) return '';
+  if (!i.kerja) return i.nama;
+  return i.mulai + '–' + i.selesai;
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+function logoutLocal() {
+  S.token = ''; S.me = null; S.data = null;
+  localStorage.removeItem('hr_token'); localStorage.removeItem('hr_me'); localStorage.removeItem('hr_pinawal');
+}
+const myRow = () => S.data && S.data.staff.find(s => norm(s.nama) === norm(S.me.nama));
+const canEditAny = () => S.me && S.me.edit !== 'tidak';
+
+/* ===== LOGIN ===== */
+async function renderLogin(err) {
+  $app.innerHTML = `
+    <div class="login">
+      <div class="stripe"><i style="background:var(--P)"></i><i style="background:var(--M)"></i><i style="background:var(--S)"></i><i style="background:var(--SC)"></i><i style="background:var(--L)"></i></div>
+      <h1>Tim Hungry Bird</h1>
+      <p class="muted" style="margin:0 0 18px">Jadwal shift, istirahat, lembur dan cuti di satu tempat.</p>
+      <label class="field"><span>Nama</span><select id="lgNama"><option value="">Memuat daftar staf…</option></select></label>
+      <label class="field"><span>PIN</span><input id="lgPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" placeholder="4–6 angka"></label>
+      <button class="btn" id="lgBtn">Masuk</button>
+      <div class="err" id="lgErr">${esc(err || '')}</div>
+    </div>`;
+  const sel = document.getElementById('lgNama'), btn = document.getElementById('lgBtn'), er = document.getElementById('lgErr');
+  if (API_URL.indexOf('http') !== 0) { er.textContent = 'API_URL belum diisi di index.html.'; return; }
+  try {
+    const list = await api('staffList');
+    list.sort((a, b) => a.nama.localeCompare(b.nama));
+    sel.innerHTML = '<option value="">Pilih namamu</option>' + list.map(s => `<option value="${esc(s.id)}">${esc(titleCase(s.nama))} — ${esc(s.posisi)}</option>`).join('');
+    const last = localStorage.getItem('hr_lastid'); if (last) sel.value = last;
+  } catch (e) { er.textContent = e.message; }
+  const go = async () => {
+    er.textContent = '';
+    const id = sel.value, pin = document.getElementById('lgPin').value.trim();
+    if (!id) { er.textContent = 'Pilih namamu dulu.'; return; }
+    if (!/^\d{4,6}$/.test(pin)) { er.textContent = 'PIN berisi 4–6 angka.'; return; }
+    btn.disabled = true; btn.textContent = 'Memeriksa…';
+    try {
+      const r = await api('login', { id, pin });
+      S.token = r.token; S.me = r.me; S.pinAwal = r.pinAwal;
+      localStorage.setItem('hr_token', r.token); localStorage.setItem('hr_me', JSON.stringify(r.me));
+      localStorage.setItem('hr_pinawal', r.pinAwal ? '1' : '0'); localStorage.setItem('hr_lastid', id);
+      S.view = r.pinAwal ? 'akun' : 'saya';
+      boot();
+    } catch (e) { er.textContent = e.message; btn.disabled = false; btn.textContent = 'Masuk'; }
+  };
+  btn.onclick = go;
+  document.getElementById('lgPin').onkeydown = e => { if (e.key === 'Enter') go(); };
+}
+
+/* ===== SHELL ===== */
+const ICON = {
+  saya: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  tim: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  riwayat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>',
+  akun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+};
+function shell(inner) {
+  const tabs = [['saya','Saya'],['tim','Tim']].concat(canEditAny() ? [['riwayat','Riwayat']] : []).concat([['akun','Akun']]);
+  $app.innerHTML = `
+    <header class="top"><div class="in">
+      <div class="brand">Tim Hungry Bird<small>${esc(titleCase(S.me.nama))} · ${esc(S.me.posisi)}</small></div>
+      <button class="icon-btn" id="refresh" aria-label="Muat ulang">Muat ulang</button>
+    </div></header>
+    <main class="wrap" id="main">${inner}</main>
+    <nav class="bottom"><div class="in">${tabs.map(([k, l]) =>
+      `<button data-v="${k}" class="${S.view === k ? 'on' : ''}">${ICON[k]}${l}</button>`).join('')}</div></nav>`;
+  document.querySelectorAll('nav.bottom button').forEach(b => b.onclick = () => { S.view = b.dataset.v; S.swapA = null; render(); });
+  document.getElementById('refresh').onclick = () => boot(true);
+}
+
+async function boot(keepView) {
+  if (!S.token) return renderLogin();
+  if (!keepView || !S.data) $app.innerHTML = '<div class="loading">Memuat jadwal…</div>';
+  try {
+    S.data = await api('jadwal');
+    S.me = S.data.me; localStorage.setItem('hr_me', JSON.stringify(S.me));
+    S.audit = null;
+    render();
+  } catch (e) {
+    if (!S.token) return renderLogin(e.message);
+    $app.innerHTML = `<div class="login"><h1>Belum terhubung</h1><p class="muted">${esc(e.message)}</p><button class="btn" onclick="boot()">Coba lagi</button></div>`;
+  }
+}
+
+function render() {
+  if (!S.token || !S.data) return boot();
+  ({ saya: viewSaya, tim: viewTim, riwayat: viewRiwayat, akun: viewAkun }[S.view] || viewSaya)();
+}
+
+/* ===== VIEW: SAYA ===== */
+function viewSaya() {
+  const d = S.data, me = myRow();
+  if (!me) { shell(`<div class="note-box">Namamu belum ada di jadwal bulan ini. Hubungi atasanmu.</div>`); return; }
+  let ti = d.dates.indexOf(d.today);
+  const base = ti >= 0 ? ti : d.dates.findIndex(x => x > d.today);
+  const kode = base >= 0 ? me.codes[base] : '';
+  const info = kodeInfo(kode);
+  const besok = base >= 0 && base + 1 < d.dates.length ? base + 1 : -1;
+  const hitung = k => me.codes.filter(c => c === k).length;
+  const masuk = me.codes.filter(c => { const i = kodeInfo(c); return i && i.kerja; }).length;
+  const isLight = kode === 'L';
+  let note = '';
+  if (info && info.kerja) note = info.istirahat ? `Istirahat ${info.istirahat} menit` : 'Tanpa istirahat, ada jam makan';
+  shell(`
+    ${base >= 0 ? `
+    <div class="ticket" style="background:${kode && ['P','PI','M','S','SC','L','SK','C'].includes(kode) ? 'var(--' + kode + ')' : '#eee'};${isLight ? 'color:#fff;border-color:var(--L)' : ''}">
+      <div class="code">${esc(kode || '–')}</div>
+      <div class="lbl">${ti >= 0 ? 'Hari ini' : 'Shift berikutnya'}, ${esc(tglPanjang(d.dates[base]))}</div>
+      <div class="jam">${esc(info ? (info.kerja ? jamText(kode) : info.nama) : 'Belum diisi')}</div>
+      <div class="note">${esc(info ? (info.kerja ? info.nama + (note ? '. ' + note : '') : 'Selamat beristirahat') : '')}</div>
+    </div>
+    ${besok >= 0 ? `<div class="next"><span>Besok, ${esc(tglPanjang(d.dates[besok]))}</span><span>${chip(me.codes[besok])} <span class="muted">${esc(jamText(me.codes[besok]))}</span></span></div>` : ''}
+    ` : `<div class="note-box">Jadwal periode ini sudah selesai.</div>`}
+    <div class="stats">
+      <div class="stat"><b>${masuk}</b><span>Masuk</span></div>
+      <div class="stat"><b>${hitung('L')}</b><span>Libur</span></div>
+      <div class="stat"><b>${hitung('SK')}</b><span>Sakit</span></div>
+      <div class="stat"><b>${hitung('C')}</b><span>Cuti</span></div>
+    </div>
+    <h2>Jadwal periode ini</h2>
+    <div id="daylist">${d.dates.map((iso, i) => {
+      const dt = toDate(iso);
+      const cls = iso === d.today ? 'today' : (iso < d.today ? 'past' : '');
+      return `<div class="day ${cls}" ${iso === d.today ? 'id="todayRow"' : ''}>
+        <div class="d">${dt.getDate()} ${BLN[dt.getMonth()]}<small>${HARI_PANJANG[dt.getDay()]}</small></div>
+        <div class="muted">${esc(jamText(me.codes[i]))}</div>
+        <div>${chip(me.codes[i])}</div></div>`;
+    }).join('')}</div>
+    <div class="soon">Istirahat, jam makan, lembur dan cuti akan menyusul di aplikasi ini.</div>`);
+}
+
+/* ===== VIEW: TIM ===== */
+function viewTim() {
+  const d = S.data, n = d.dates.length;
+  let start = Math.max(0, d.dates.indexOf(d.today));
+  start = Math.min(Math.max(0, start + S.week * 7), Math.max(0, n - 1));
+  const idx = []; for (let i = start; i < Math.min(n, start + 7); i++) idx.push(i);
+  const divs = ['Semua'].concat([...new Set(d.staff.map(s => s.divisi).filter(Boolean))]);
+  const q = norm(S.q);
+  const rows = d.staff.filter(s => (S.div === 'Semua' || s.divisi === S.div) && (!q || norm(s.nama).includes(q) || norm(s.posisi).includes(q)));
+  const ti = d.dates.indexOf(d.today);
+  let sum = '';
+  if (ti >= 0) {
+    const c = {};
+    d.staff.forEach(s => { const k = s.codes[ti] || '–'; c[k] = (c[k] || 0) + 1; });
+    sum = `<div class="summary"><span class="muted">Hari ini:</span>${Object.keys(c).sort().map(k => `${chip(k)}<span>${c[k]}</span>`).join(' ')}</div>`;
+  }
+  shell(`
+    ${S.swapA ? `<div class="swapbar"><span>Pilih sel kedua untuk ditukar dengan ${esc(titleCase(S.swapA.nama).split(' ')[0])} (${esc(tglPendek(S.swapA.tgl))}, ${esc(S.swapA.dari)})</span><button id="swapCancel">Batal</button></div>` : ''}
+    <div class="bar"><input id="q" type="search" placeholder="Cari nama atau posisi" value="${esc(S.q)}"></div>
+    <div class="seg">${divs.map(x => `<button data-d="${esc(x)}" class="${S.div === x ? 'on' : ''}">${esc(x)}</button>`).join('')}</div>
+    <div class="weeknav">
+      <button id="wPrev" ${start === 0 ? 'disabled' : ''} aria-label="Minggu sebelumnya">‹</button>
+      <b>${idx.length ? esc(tglPendek(d.dates[idx[0]])) + ' – ' + esc(tglPendek(d.dates[idx[idx.length - 1]])) : ''}</b>
+      <button id="wNext" ${start + 7 >= n ? 'disabled' : ''} aria-label="Minggu berikutnya">›</button>
+    </div>
+    ${sum}
+    <div class="gridwrap"><table>
+      <thead><tr><th class="namecol">Nama</th>${idx.map(i => { const dt = toDate(d.dates[i]); return `<th class="${d.dates[i] === d.today ? 'today' : ''}">${HARI[dt.getDay()]}<br>${dt.getDate()}</th>`; }).join('')}</tr></thead>
+      <tbody>${rows.map(s => `<tr class="${norm(s.nama) === norm(S.me.nama) ? 'mine' : ''}">
+        <td class="namecol"><div>${esc(titleCase(s.nama))}</div><small>${esc(s.posisi)}</small></td>
+        ${idx.map(i => {
+          const pick = S.swapA && norm(S.swapA.nama) === norm(s.nama) && S.swapA.tgl === d.dates[i];
+          return `<td class="${d.dates[i] === d.today ? 'today' : ''} ${s.editable ? 'edit' : ''} ${pick ? 'pick' : ''}" ${s.editable ? `data-n="${esc(s.nama)}" data-t="${d.dates[i]}" data-k="${esc(s.codes[i])}"` : ''}>${chip(s.codes[i])}</td>`;
+        }).join('')}</tr>`).join('')}</tbody>
+    </table></div>
+    ${canEditAny() ? '<p class="muted">Sel bergaris putus-putus bisa kamu ubah. Ketuk untuk mengganti shift atau menukar jadwal.</p>' : ''}`);
+  const qi = document.getElementById('q');
+  qi.oninput = () => { S.q = qi.value; const pos = qi.selectionStart; viewTim(); const n2 = document.getElementById('q'); n2.focus(); n2.setSelectionRange(pos, pos); };
+  document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { S.div = b.dataset.d; viewTim(); });
+  document.getElementById('wPrev').onclick = () => { S.week--; viewTim(); };
+  document.getElementById('wNext').onclick = () => { S.week++; viewTim(); };
+  const sc = document.getElementById('swapCancel'); if (sc) sc.onclick = () => { S.swapA = null; viewTim(); };
+  document.querySelectorAll('td.edit').forEach(td => td.onclick = () => {
+    const cell = { nama: td.dataset.n, tgl: td.dataset.t, dari: td.dataset.k };
+    if (S.swapA) {
+      if (S.swapA.nama === cell.nama && S.swapA.tgl === cell.tgl) { S.swapA = null; viewTim(); return; }
+      sheetTukar(S.swapA, cell);
+    } else sheetUbah(cell);
+  });
+}
+
+/* ===== SHEET: UBAH & TUKAR ===== */
+function openSheet(html) {
+  const scrim = document.createElement('div'); scrim.className = 'scrim';
+  scrim.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  scrim.onclick = e => { if (e.target === scrim) scrim.remove(); };
+  document.body.appendChild(scrim);
+  return scrim;
+}
+function alasanHtml() {
+  return `<label class="field"><span>Alasan (wajib)</span>
+    <div class="quick">${ALASAN.map(a => `<button type="button" data-a="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+    <textarea id="alasan" rows="2" style="margin-top:8px" placeholder="Contoh: sakit demam, ada surat dokter"></textarea></label>`;
+}
+function bindAlasan(root) {
+  root.querySelectorAll('.quick button').forEach(b => b.onclick = () => {
+    const t = root.querySelector('#alasan'); t.value = t.value ? t.value + ', ' + b.dataset.a.toLowerCase() : b.dataset.a; t.focus();
+  });
+}
+function sheetUbah(cell) {
+  let pilih = '';
+  const kodes = S.data.kode;
+  const sc = openSheet(`
+    <h3>${esc(titleCase(cell.nama))}</h3>
+    <p class="muted" style="margin:4px 0 0">${esc(tglPanjang(cell.tgl))}. Sekarang ${chip(cell.dari)}</p>
+    <div class="codes">${kodes.map(k => `<button type="button" data-k="${esc(k.kode)}" style="background:${['P','PI','M','S','SC','L','SK','C'].includes(k.kode) ? 'var(--' + k.kode + ')' : '#eee'};${k.kode === 'L' ? 'color:#fff' : ''}">${esc(k.kode)}<small>${esc(k.nama)}</small></button>`).join('')}</div>
+    ${alasanHtml()}
+    <div class="err" id="sErr"></div>
+    <button class="btn" id="sSave">Simpan perubahan</button>
+    <button class="btn ghost" id="sSwap">Tukar dengan sel lain</button>
+    <button class="btn ghost" id="sClose">Batal</button>`);
+  const root = sc.querySelector('.sheet');
+  bindAlasan(root);
+  root.querySelectorAll('.codes button').forEach(b => b.onclick = () => {
+    pilih = b.dataset.k; root.querySelectorAll('.codes button').forEach(x => x.classList.toggle('on', x === b));
+  });
+  root.querySelector('#sClose').onclick = () => sc.remove();
+  root.querySelector('#sSwap').onclick = () => { sc.remove(); S.swapA = cell; viewTim(); toast('Ketuk sel kedua untuk ditukar'); };
+  root.querySelector('#sSave').onclick = async () => {
+    const er = root.querySelector('#sErr'), alasan = root.querySelector('#alasan').value.trim();
+    er.textContent = '';
+    if (!pilih) { er.textContent = 'Pilih kode shift baru.'; return; }
+    if (pilih === cell.dari) { er.textContent = 'Kode baru sama dengan sekarang.'; return; }
+    if (alasan.length < 3) { er.textContent = 'Isi alasan perubahan.'; return; }
+    const b = root.querySelector('#sSave'); b.disabled = true; b.textContent = 'Menyimpan…';
+    try {
+      await api('ubah', { nama: cell.nama, tgl: cell.tgl, dari: cell.dari, ke: pilih, alasan });
+      sc.remove(); toast('Jadwal diperbarui'); boot(true);
+    } catch (e) { er.textContent = e.message; b.disabled = false; b.textContent = 'Simpan perubahan'; }
+  };
+}
+function sheetTukar(a, b) {
+  const side = c => `<div class="side"><b>${esc(titleCase(c.nama).split(' ').slice(0, 2).join(' '))}</b><br>${esc(tglPendek(c.tgl))}<br>${chip(c.dari)}</div>`;
+  const sc = openSheet(`
+    <h3>Tukar jadwal</h3>
+    <div class="swapview">${side(a)}<span style="font-size:22px">⇄</span>${side(b)}</div>
+    <p class="muted">Setelah ditukar: ${esc(titleCase(a.nama).split(' ')[0])} ${chip(b.dari)} dan ${esc(titleCase(b.nama).split(' ')[0])} ${chip(a.dari)}</p>
+    ${alasanHtml()}
+    <div class="err" id="sErr"></div>
+    <button class="btn" id="sSave">Tukar jadwal</button>
+    <button class="btn ghost" id="sClose">Batal</button>`);
+  const root = sc.querySelector('.sheet');
+  bindAlasan(root);
+  root.querySelector('#sClose').onclick = () => { sc.remove(); S.swapA = null; viewTim(); };
+  root.querySelector('#sSave').onclick = async () => {
+    const er = root.querySelector('#sErr'), alasan = root.querySelector('#alasan').value.trim();
+    if (a.dari === b.dari) { er.textContent = 'Kedua sel berisi kode yang sama, tidak ada yang ditukar.'; return; }
+    if (alasan.length < 3) { er.textContent = 'Isi alasan penukaran.'; return; }
+    const btn = root.querySelector('#sSave'); btn.disabled = true; btn.textContent = 'Menukar…';
+    try {
+      await api('tukar', { aNama: a.nama, aTgl: a.tgl, aDari: a.dari, bNama: b.nama, bTgl: b.tgl, bDari: b.dari, alasan });
+      sc.remove(); S.swapA = null; toast('Jadwal ditukar'); boot(true);
+    } catch (e) { er.textContent = e.message; btn.disabled = false; btn.textContent = 'Tukar jadwal'; }
+  };
+}
+
+/* ===== VIEW: RIWAYAT ===== */
+async function viewRiwayat() {
+  shell('<h2>Riwayat perubahan</h2><div id="logs" class="loading">Memuat…</div>');
+  try {
+    if (!S.audit) S.audit = await api('audit');
+    const el = document.getElementById('logs'); if (!el) return;
+    el.className = '';
+    el.innerHTML = S.audit.length ? S.audit.map(l => `<div class="log">
+      <div class="h"><span>${esc(l.waktu)}</span><span>${esc(l.aksi)} oleh ${esc(titleCase(l.oleh))}</span></div>
+      <div class="b">${esc(titleCase(l.staf))}, ${esc(/^\d{4}-/.test(l.tgl) ? tglPendek(l.tgl) : l.tgl)}: ${chip(l.dari)} → ${chip(l.ke)}</div>
+      <div class="a">${esc(l.alasan)}</div></div>`).join('') : '<p class="muted">Belum ada perubahan jadwal.</p>';
+  } catch (e) { const el = document.getElementById('logs'); if (el) el.textContent = e.message; }
+}
+
+/* ===== VIEW: AKUN ===== */
+function viewAkun() {
+  const m = S.me;
+  shell(`
+    ${S.pinAwal ? '<div class="note-box">Kamu masih memakai PIN awal dari atasan. Ganti dengan PIN pribadimu sekarang.</div>' : ''}
+    <h2>${esc(titleCase(m.nama))}</h2>
+    <p class="muted" style="margin:0">${esc(m.posisi)}, divisi ${esc(m.divisi || '-')}. Atasan langsung: ${esc(m.atasan || '-')}</p>
+    <h2>Ganti PIN</h2>
+    <label class="field"><span>PIN sekarang</span><input id="p0" type="password" inputmode="numeric" maxlength="6"></label>
+    <label class="field"><span>PIN baru (4–6 angka)</span><input id="p1" type="password" inputmode="numeric" maxlength="6"></label>
+    <label class="field"><span>Ulangi PIN baru</span><input id="p2" type="password" inputmode="numeric" maxlength="6"></label>
+    <div class="err" id="pErr"></div>
+    <button class="btn" id="pSave">Simpan PIN baru</button>
+    <button class="btn danger" id="out">Keluar</button>`);
+  document.getElementById('pSave').onclick = async () => {
+    const er = document.getElementById('pErr'), lama = document.getElementById('p0').value.trim(), baru = document.getElementById('p1').value.trim();
+    er.textContent = '';
+    if (!/^\d{4,6}$/.test(baru)) { er.textContent = 'PIN baru harus 4–6 angka.'; return; }
+    if (baru !== document.getElementById('p2').value.trim()) { er.textContent = 'Ulangi PIN baru belum sama.'; return; }
+    const b = document.getElementById('pSave'); b.disabled = true;
+    try {
+      await api('gantiPin', { lama, baru });
+      S.pinAwal = false; localStorage.setItem('hr_pinawal', '0');
+      toast('PIN berhasil diganti'); S.view = 'saya'; render();
+    } catch (e) { er.textContent = e.message; b.disabled = false; }
+  };
+  document.getElementById('out').onclick = async () => {
+    try { await api('logout'); } catch (e) {}
+    logoutLocal(); renderLogin();
+  };
+}
+
+boot();
+if (S.view === 'saya') setTimeout(() => { const r = document.getElementById('todayRow'); if (r) r.scrollIntoView({ block: 'center' }); }, 1200);
+</script>
+</body>
+</html>
