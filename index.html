@@ -72,6 +72,7 @@
   tr.mine .namecol{box-shadow:inset 4px 0 0 var(--leaf)}
   td .chip{min-width:36px;height:28px;font-size:13px}
   td.edit .chip{cursor:pointer;outline:1px dashed rgba(22,38,31,.35);outline-offset:2px}
+  td.own .chip,td.tgt .chip{cursor:pointer;outline:2px solid var(--leaf);outline-offset:2px}
   td.pick .chip{outline:3px solid var(--leaf);outline-offset:2px}
   .swapbar{position:sticky;top:64px;z-index:4;background:var(--leaf);color:#fff;border-radius:12px;padding:10px 12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
   .swapbar button{background:#fff;color:var(--ink);border:0;border-radius:8px;padding:6px 10px}
@@ -163,7 +164,7 @@ let S = {
   token: localStorage.getItem('hr_token') || '',
   me: JSON.parse(localStorage.getItem('hr_me') || 'null'),
   pinAwal: localStorage.getItem('hr_pinawal') === '1',
-  data: null, view: 'saya', week: 0, div: 'Semua', q: '', swapA: null, audit: null
+  data: null, view: 'saya', week: 0, div: 'Semua', q: '', swapA: null, reqA: null, audit: null
 };
 const $app = document.getElementById('app');
 
@@ -278,7 +279,7 @@ function shell(inner) {
     <main class="wrap" id="main">${inner}</main>
     <nav class="bottom"><div class="in">${tabs.map(([k, l]) =>
       `<button data-v="${k}" class="${S.view === k || (k === 'tim' && S.view === 'riwayat') ? 'on' : ''}">${ICON[k]}<span>${l}${badge(k)}</span></button>`).join('')}</div></nav>`;
-  document.querySelectorAll('nav.bottom button').forEach(b => b.onclick = () => { S.view = b.dataset.v; S.swapA = null; render(); });
+  document.querySelectorAll('nav.bottom button').forEach(b => b.onclick = () => { S.view = b.dataset.v; S.swapA = null; S.reqA = null; render(); });
   document.getElementById('refresh').onclick = () => boot(true);
 }
 
@@ -362,6 +363,7 @@ function viewTim() {
     sum = `<div class="summary"><span class="muted">Hari ini:</span>${Object.keys(c).sort().map(k => `${chip(k)}<span>${c[k]}</span>`).join(' ')}</div>`;
   }
   shell(`
+    ${S.reqA ? `<div class="swapbar"><span>Pilih sel tujuan: jadwal rekan satu divisi, atau tanggal lain milikmu (tukar ${esc(tglPendek(S.reqA.tgl))}, ${esc(S.reqA.dari)})</span><button id="reqCancel">Batal</button></div>` : ''}
     ${S.swapA ? `<div class="swapbar"><span>Pilih sel kedua untuk ditukar dengan ${esc(titleCase(S.swapA.nama).split(' ')[0])} (${esc(tglPendek(S.swapA.tgl))}, ${esc(S.swapA.dari)})</span><button id="swapCancel">Batal</button></div>` : ''}
     <div class="bar"><input id="q" type="search" placeholder="Cari nama atau posisi" value="${esc(S.q)}"></div>
     <div class="seg">${divs.map(x => `<button data-d="${esc(x)}" class="${S.div === x ? 'on' : ''}">${esc(x)}</button>`).join('')}</div>
@@ -376,10 +378,16 @@ function viewTim() {
       <tbody>${rows.map(s => `<tr class="${norm(s.nama) === norm(S.me.nama) ? 'mine' : ''}">
         <td class="namecol"><div>${esc(titleCase(s.nama))}</div><small>${esc(s.posisi)}</small></td>
         ${idx.map(i => {
-          const pick = S.swapA && norm(S.swapA.nama) === norm(s.nama) && S.swapA.tgl === d.dates[i];
-          return `<td class="${d.dates[i] === d.today ? 'today' : ''} ${s.editable ? 'edit' : ''} ${pick ? 'pick' : ''}" ${s.editable ? `data-n="${esc(s.nama)}" data-t="${d.dates[i]}" data-k="${esc(s.codes[i])}"` : ''}>${chip(s.codes[i])}</td>`;
+          const iso = d.dates[i], mine = norm(s.nama) === norm(S.me.nama), future = iso >= d.today;
+          const pick = (S.swapA && norm(S.swapA.nama) === norm(s.nama) && S.swapA.tgl === iso) || (S.reqA && mine && S.reqA.tgl === iso);
+          let mode = '';
+          if (S.reqA) { if (future && !pick && (mine || s.divisi === S.me.divisi)) mode = 'tgt'; }
+          else if (s.editable) mode = 'edit';
+          else if (mine && future) mode = 'own';
+          return `<td class="${iso === d.today ? 'today' : ''} ${mode} ${pick ? 'pick' : ''}" ${mode ? `data-m="${mode}" data-n="${esc(s.nama)}" data-t="${iso}" data-k="${esc(s.codes[i])}"` : ''}>${chip(s.codes[i])}</td>`;
         }).join('')}</tr>`).join('')}</tbody>
     </table></div>
+    ${!canEditAny() ? '<p class="muted">Mau tukar shift atau libur? Ketuk jadwalmu sendiri (bergaris hijau), lalu pilih sel tujuan.</p>' : ''}
     ${canEditAny() ? '<p class="muted">Sel bergaris putus-putus bisa kamu ubah. Ketuk untuk mengganti shift atau menukar jadwal.</p><button class="btn ghost" id="toRiwayat">Lihat riwayat perubahan jadwal</button>' : ''}`);
   const tr = document.getElementById('toRiwayat'); if (tr) tr.onclick = () => { S.view = 'riwayat'; render(); };
   const qi = document.getElementById('q');
@@ -388,6 +396,9 @@ function viewTim() {
   document.getElementById('wPrev').onclick = () => { S.week--; viewTim(); };
   document.getElementById('wNext').onclick = () => { S.week++; viewTim(); };
   const sc = document.getElementById('swapCancel'); if (sc) sc.onclick = () => { S.swapA = null; viewTim(); };
+  const rc = document.getElementById('reqCancel'); if (rc) rc.onclick = () => { S.reqA = null; viewTim(); };
+  document.querySelectorAll('td.own').forEach(td => td.onclick = () => mulaiReqTukar({ nama: td.dataset.n, tgl: td.dataset.t, dari: td.dataset.k }));
+  document.querySelectorAll('td.tgt').forEach(td => td.onclick = () => kirimReqTukar(S.reqA, { nama: td.dataset.n, tgl: td.dataset.t, dari: td.dataset.k }));
   document.querySelectorAll('td.edit').forEach(td => td.onclick = () => {
     const cell = { nama: td.dataset.n, tgl: td.dataset.t, dari: td.dataset.k };
     if (S.swapA) {
@@ -598,7 +609,54 @@ function formCuti() {
       await refreshStatus(); toast('Pengajuan cuti dikirim'); render();
     });
 }
-const pill = s => `<span class="pill ${s === 'Disetujui' ? 'ok' : s === 'Ditolak' ? 'no' : s === 'Menunggu' ? 'wait' : ''}">${esc(s)}</span>`;
+const pill = s => `<span class="pill ${s === 'Disetujui' ? 'ok' : /^Ditolak/.test(s) ? 'no' : /^Menunggu/.test(s) ? 'wait' : ''}">${esc(s === 'Menunggu' ? 'Menunggu atasan' : s)}</span>`;
+
+
+/* ===== TUKAR DARI STAF ===== */
+function mulaiReqTukar(cell) {
+  const sc = openSheet(`<h3>Ajukan tukar</h3>
+    <p class="muted" style="margin:6px 0 0">${esc(tglPanjang(cell.tgl))}, jadwalmu ${chip(cell.dari)}</p>
+    <p>Setelah ini, ketuk sel tujuan:</p>
+    <p style="margin:0">• <b>Tukar shift/libur dengan rekan</b>: sel rekan satu divisi. Rekan harus menerima dulu, lalu atasan menyetujui.</p>
+    <p>• <b>Geser liburmu sendiri</b>: tanggal lain di barismu. Langsung ke atasan.</p>
+    <button class="btn" id="rOk">Pilih sel tujuan</button><button class="btn ghost" id="rNo">Batal</button>`);
+  sc.querySelector('#rNo').onclick = () => sc.remove();
+  sc.querySelector('#rOk').onclick = () => { sc.remove(); S.reqA = cell; viewTim(); };
+}
+function kirimReqTukar(a, b) {
+  const sendiri = norm(a.nama) === norm(b.nama);
+  if (a.dari === b.dari) { showError('Kedua sel berisi kode yang sama (' + a.dari + '), tidak ada yang ditukar.'); return; }
+  const side = c => `<div class="side"><b>${esc(titleCase(c.nama).split(' ').slice(0, 2).join(' '))}</b><br>${esc(tglPendek(c.tgl))}<br>${chip(c.dari)}</div>`;
+  gerbang(sendiri ? 'Geser jadwal' : 'Ajukan tukar dengan rekan',
+    `<div class="swapview">${side(a)}<span style="font-size:22px">⇄</span>${side(b)}</div>
+     <label class="field"><span>Alasan</span><textarea id="rAl" rows="2" placeholder="Contoh: ada acara keluarga"></textarea></label>`,
+    async (atasan, q) => {
+      const alasan = q('#rAl').value.trim();
+      if (alasan.length < 3) throw new Error('Isi alasan.');
+      await api('ajukanTukar', { aTgl: a.tgl, bNama: b.nama, bTgl: b.tgl, atasan, alasan });
+      S.reqA = null; await refreshStatus();
+      toast(sendiri ? 'Dikirim ke ' + atasan : 'Dikirim ke ' + titleCase(b.nama).split(' ')[0] + ' untuk diterima');
+      render();
+    });
+}
+function jawabTukar(id, terima) {
+  jalankan('Menyimpan…', () => api('jawabTukar', { id, terima: terima ? '1' : '0' }), terima ? 'Diterima, menunggu atasan' : 'Permintaan ditolak');
+}
+function ajuDesc(x) {
+  const d = x.detail || {};
+  if (x.jenis === 'Tukar') {
+    const sendiri = norm(d.rekan) === norm(x.staf);
+    return (sendiri ? 'Geser jadwal: ' : 'Tukar dengan ' + titleCase(d.rekan || '').split(' ')[0] + ': ') +
+      tglPendek(x.mulai) + ' (' + d.aDari + ') ⇄ ' + tglPendek(x.selesai) + ' (' + d.bDari + ')';
+  }
+  if (x.jenis === 'Sakit ke Cuti') return 'Sakit jadi cuti: ' + (d.tgl || []).map(tglPendek).join(', ');
+  return tglPendek(x.mulai) + (x.selesai !== x.mulai ? ' – ' + tglPendek(x.selesai) : '') + (x.jenis === 'Cuti' ? ', ' + x.hari + ' hari' : '');
+}
+function ajukanSakitCuti() {
+  const pilih = [...document.querySelectorAll('.skc:checked')].map(c => c.value);
+  if (!pilih.length) { showError('Centang hari sakit yang mau diganti jadi cuti.'); return; }
+  jalankan('Menyimpan…', () => api('ajukanSakitCuti', { tgl: pilih.join(',') }), 'Dikirim ke Asst Manager');
+}
 
 /* ===== VIEW: ABSEN ===== */
 function viewAbsen() {
@@ -632,7 +690,20 @@ function viewAbsen() {
       <div class="acts">${acts.join('')}</div>`;
   }
   const live = st.live.slice().sort((x, y) => x.mulai - y.mulai);
-  shell(`${top}
+  const minta = st.permintaanTukar || [], skc = st.sakitCuti || {};
+  const blokMinta = minta.length ? `<h2>Permintaan tukar untukmu</h2>` + minta.map(x => {
+    const d = x.detail || {};
+    return `<div class="appr"><div class="k">${esc(titleCase(x.staf))} mengajak tukar</div>
+      <p>Kamu: ${esc(tglPanjang(x.selesai))} ${chip(d.bDari)} → jadi ${chip(d.aDari)}</p>
+      <p>${esc(titleCase(x.staf).split(' ')[0])}: ${esc(tglPanjang(x.mulai))} ${chip(d.aDari)} → jadi ${chip(d.bDari)}</p>
+      <p class="muted">Alasan: ${esc(x.alasan)}</p>
+      <div class="two"><button class="btn" data-jt="${esc(x.id)}" data-v="1">Terima</button><button class="btn danger" data-jt="${esc(x.id)}" data-v="0">Tolak</button></div></div>`;
+  }).join('') : '';
+  const blokSkc = skc.buka && skc.sk && skc.sk.length ? `<h2>Ganti sakit jadi cuti</h2>
+    <div class="appr"><p>Dibuka sampai ${esc(tglPendek(skc.tutup))}. Centang hari sakit yang mau dibayar sebagai cuti (memotong jatah cuti).</p>
+    ${skc.sk.map(t => `<label class="row" style="justify-content:flex-start"><input type="checkbox" class="skc" value="${t}" checked> ${esc(tglPanjang(t))} ${chip('SK')}</label>`).join('')}
+    <button class="btn" id="bSkc">Ajukan ke Asst Manager</button></div>` : '';
+  shell(`${top}${blokMinta}${blokSkc}
     <h2>Sedang berlangsung</h2>
     ${live.length ? live.map(l => `<div class="row"><span><b>${esc(titleCase(l.nama))}</b><small>${esc(l.jenis)} sejak ${jam(l.mulai)}</small></span>
       <span class="tm" data-start="${l.mulai}" data-jenis="${esc(l.jenis)}">${mmss(nowMs() - l.mulai)}</span></div>`).join('')
@@ -642,11 +713,12 @@ function viewAbsen() {
       <span>${x.telat ? `<span class="pill no">Telat ${x.telat} m</span>` : ''}${x.jenis === 'Lembur' && x.approval ? pill(x.approval) : ''}</span></div>`).join('')
       : '<p class="muted">Belum ada catatan hari ini.</p>'}
     <h2>Pengajuan saya</h2>
-    ${st.pengajuan.length ? st.pengajuan.map(x => `<div class="row"><span><b>${esc(x.jenis)}</b><small>${esc(tglPendek(x.mulai))}${x.selesai !== x.mulai ? ' – ' + esc(tglPendek(x.selesai)) : ''}${x.jenis === 'Cuti' ? ', ' + x.hari + ' hari' : ''}. Ke ${esc(x.atasan)}${x.catatan ? '. Catatan: ' + esc(x.catatan) : ''}</small></span>${pill(x.status)}</div>`).join('')
+    ${st.pengajuan.length ? st.pengajuan.map(x => `<div class="row"><span><b>${esc(x.jenis)}</b><small>${esc(ajuDesc(x))}. Ke ${esc(x.atasan)}${x.catatan ? '. Catatan: ' + esc(x.catatan) : ''}</small></span>${pill(x.status)}</div>`).join('')
       : '<p class="muted">Belum ada pengajuan.</p>'}`);
   const on = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
   on('bSelesai', selesaiAktif); on('bIst', mulaiIstirahat); on('bTI', formTidakIstirahat);
-  on('bMakan', mulaiMakan); on('bLembur', formLembur); on('bCuti', formCuti);
+  on('bMakan', mulaiMakan); on('bLembur', formLembur); on('bCuti', formCuti); on('bSkc', ajukanSakitCuti);
+  document.querySelectorAll('[data-jt]').forEach(b => b.onclick = () => jawabTukar(b.dataset.jt, b.dataset.v === '1'));
   S.poll = setInterval(async () => { if (S.view !== 'absen' || document.querySelector('.scrim,#busy')) return;
     try { await refreshStatus(); render(); } catch (e) {} }, 45000);
 }
@@ -663,6 +735,7 @@ async function viewSetuju() {
   el.innerHTML = list.map((x, i) => {
     let det = '';
     if (x.tipe === 'aktivitas') det = `<p>${esc(tglPanjang(x.tanggal))}, ${jam(x.mulai)}–${jam(x.selesai)}: <b>${durTxt(x.menit)}</b></p><p>Pekerjaan: ${esc(x.catatan)}</p>`;
+    else if (x.jenis === 'Tukar' || x.jenis === 'Sakit ke Cuti') det = `<p>${esc(ajuDesc(x))}</p><p>Alasan: ${esc(x.alasan)}</p>${x.jenis === 'Sakit ke Cuti' ? '<p class="muted">Cek sisa cuti staf sebelum menyetujui.</p>' : ''}`;
     else if (x.jenis === 'Cuti') det = `<p>${esc(tglPanjang(x.mulai))}${x.selesai !== x.mulai ? ' s/d ' + esc(tglPanjang(x.selesai)) : ''} (${x.hari} hari)</p><p>Alasan: ${esc(x.alasan)}</p>`;
     else det = `<p>${esc(tglPanjang(x.mulai))}</p><p>Alasan: ${esc(x.alasan)}</p>`;
     return `<div class="appr"><div class="k">${esc(x.tipe === 'aktivitas' ? 'Lembur' : x.jenis)}: ${esc(titleCase(x.staf))}</div>${det}
@@ -675,7 +748,7 @@ async function viewSetuju() {
     jalankan('Menyimpan…', async () => {
       const r = await api('putuskan', { tipe: x.tipe, id: x.id, keputusan: b.dataset.k, catatan });
       if (r.pesan) setTimeout(() => toast(r.pesan), 400);
-      if (x.jenis === 'Cuti' && b.dataset.k === 'Disetujui') S.data = await api('jadwal');
+      if (['Cuti', 'Tukar', 'Sakit ke Cuti'].includes(x.jenis) && b.dataset.k === 'Disetujui') S.data = await api('jadwal');
     }, b.dataset.k === 'Disetujui' ? 'Disetujui' : 'Ditolak');
   });
 }
