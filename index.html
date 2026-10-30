@@ -164,6 +164,11 @@
   .cuti>small{color:var(--mute);font-size:13px}
   .cutiinfo{background:#EAF5EE;border-radius:8px;padding:6px 10px}
   .cutiinfo.kurang{background:#FDE7E5;color:#8A1F17}
+  .batas{color:#8A4B00;font-size:13px!important;font-weight:700;margin-top:2px!important;display:block}
+  .mini{margin-top:6px;border:1px solid #E8B4B0;background:var(--card);color:var(--danger);border-radius:999px;padding:6px 12px;font-size:13px;min-height:34px;font-weight:700}
+  .kabar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:14px;background:#FDE7E5;border:2px solid #E8B4B0;border-radius:14px;padding:10px 12px;color:#6B1A13}
+  .kabar small{display:block;font-size:13px;color:#8A1F17}
+  .kabar button{border:0;background:#fff;border-radius:10px;padding:8px 14px;font-weight:700;flex:none}
   .appr.minta{border:2px solid var(--warn)}
   .mintabar{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;margin-top:14px;background:#FFF0D6;border:2px solid var(--warn);border-radius:14px;padding:12px 14px;text-align:left;color:#6B3A00}
   .appr.sel{border:2px solid var(--leaf);background:#F3F8F4}
@@ -248,6 +253,8 @@ function logoutLocal() {
 }
 const myRow = () => S.data && S.data.staff.find(s => norm(s.nama) === norm(S.me.nama));
 const canEditAny = () => S.me && S.me.edit !== 'tidak';
+const fmtBatas = ms => { if (!ms) return ''; const d = new Date(ms); return HARI[d.getDay()] + ' ' + d.getDate() + ' ' + BLN[d.getMonth()] + ' ' + ('0' + d.getHours()).slice(-2) + '.' + ('0' + d.getMinutes()).slice(-2); };
+const sisaWaktu = ms => { const m = Math.round((ms - Date.now()) / 60000); if (m <= 0) return 'lewat'; if (m < 60) return m + ' menit lagi'; if (m < 1440) return Math.floor(m / 60) + ' jam lagi'; return Math.floor(m / 1440) + ' hari lagi'; };
 const isManager = () => S.me && norm(S.me.peran) === 'manager';
 const nMinta = () => (S.st && S.st.permintaanTukar ? S.st.permintaanTukar.length : 0);
 
@@ -339,6 +346,25 @@ function render() {
 }
 
 /* ===== VIEW: SAYA ===== */
+/* ===== KABAR: pengajuan ditolak / kedaluwarsa / dibatalkan atasan ===== */
+const AKHIR_BURUK = s => /^Ditolak/.test(s) || s === 'Kedaluwarsa' || s === 'Dibatalkan' || s === 'Batal';
+function dilihat() { try { return JSON.parse(localStorage.getItem('hr_kabar') || '[]'); } catch (e) { return []; } }
+function simpanDilihat(ids) { try { localStorage.setItem('hr_kabar', JSON.stringify([...new Set(dilihat().concat(ids))].slice(-100))); } catch (e) {} }
+function kabarList() {
+  const st = S.st; if (!st || !st.pengajuan) return [];
+  const sudah = dilihat(), batasLama = Date.now() - 14 * 864e5;
+  return st.pengajuan.filter(x => (AKHIR_BURUK(x.status) || x.lewat) && x.waktu > batasLama && !sudah.includes(x.id) && norm(x.oleh) !== norm(S.me.nama));
+}
+function kabarHtml() {
+  return kabarList().map(x => {
+    const s = x.lewat ? 'Kedaluwarsa' : x.status;
+    const why = s === 'Kedaluwarsa' ? 'tidak dikonfirmasi sebelum batas, jadwal tidak berubah' : s === 'Ditolak Rekan' || s === 'Ditolak Staf' ? 'ditolak rekan' : s === 'Batal' ? 'batal karena jadwal sudah berubah' : s === 'Dibatalkan' ? 'dibatalkan oleh ' + titleCase(x.oleh || 'atasan') : 'ditolak atasan';
+    return `<div class="kabar"><div><b>${esc(x.jenis)} ${esc(why)}</b><small>${esc(ajuDesc(x))}${x.catatan ? '. ' + esc(x.catatan) : ''}</small></div>
+      <button data-tutup="${esc(x.id)}" aria-label="Tutup">Oke</button></div>`;
+  }).join('');
+}
+function tandaiDilihat() { const l = kabarList(); if (l.length) simpanDilihat(l.map(x => x.id)); }
+
 /* ===== SISA CUTI ===== */
 function cutiKartu(c) {
   if (!c) return '';
@@ -364,6 +390,7 @@ function viewSaya() {
   let note = '';
   if (info && info.kerja) note = info.istirahat ? `Istirahat ${info.istirahat} menit` : 'Tanpa istirahat, ada jam makan';
   shell(`
+    ${kabarHtml()}
     ${nMinta() ? `<button class="mintabar" id="keMinta"><b>${nMinta()} permintaan tukar menunggu jawabanmu</b><span>Buka ›</span></button>` : ''}
     ${base >= 0 ? `
     <div class="ticket" style="background:${kode && ['P','PI','M','S','SC','L','SK','C'].includes(kode) ? 'var(--' + kode + ')' : '#eee'};${isLight ? 'color:#fff;border-color:var(--L)' : ''}">
@@ -393,6 +420,7 @@ function viewSaya() {
     }).join('')}</div>
     <div class="soon">Istirahat, jam makan, lembur dan cuti ada di menu Absen.</div>`);
   const bt = document.getElementById('sayaTukar'); if (bt) bt.onclick = pilihTukar;
+  document.querySelectorAll('[data-tutup]').forEach(b => b.onclick = () => { simpanDilihat([b.dataset.tutup]); viewSaya(); });
   const km = document.getElementById('keMinta'); if (km) km.onclick = () => { S.view = 'absen'; render(); setTimeout(() => { const h = document.getElementById('blokMinta'); if (h) h.scrollIntoView({ block: 'start' }); }, 50); };
 }
 
@@ -708,7 +736,14 @@ function formCuti() {
       await refreshStatus(); toast('Pengajuan cuti dikirim'); render();
     });
 }
-const pill = s => `<span class="pill ${s === 'Disetujui' ? 'ok' : /^Ditolak/.test(s) ? 'no' : /^Menunggu/.test(s) ? 'wait' : ''}">${esc(s === 'Menunggu' ? 'Menunggu atasan' : s)}</span>`;
+const pill = s => `<span class="pill ${s === 'Disetujui' ? 'ok' : /^Ditolak/.test(s) ? 'no' : /^Menunggu/.test(s) ? 'wait' : s === 'Kedaluwarsa' ? 'warn' : ''}">${esc(s === 'Menunggu' ? 'Menunggu atasan' : s)}</span>`;
+const PENDING = ['Menunggu', 'Menunggu Rekan'];
+function batalkan(id, label) {
+  const sc = openSheet(`<h3>Batalkan pengajuan?</h3><p>${esc(label)}</p><p class="muted">Jadwal tidak berubah. Kamu bisa mengajukan ulang setelah ini.</p>
+    <button class="btn danger" id="bYa">Ya, batalkan</button><button class="btn ghost" id="bNo">Kembali</button>`);
+  sc.querySelector('#bNo').onclick = () => sc.remove();
+  sc.querySelector('#bYa').onclick = () => { sc.remove(); jalankan('Membatalkan…', () => api('batalkan', { id }), r => r.pesan || 'Dibatalkan').then(() => { if (S.view === 'setuju') muatSetuju(true); }); };
+}
 
 
 /* ===== TUKAR DARI STAF ===== */
@@ -833,6 +868,7 @@ function viewAbsen() {
       : `<p>Kamu: ${B}</p><p>${first(x.staf)}: ${A}</p>`;
     return `<div class="appr minta"><div class="k">${judul}</div>${baris}
       <p class="muted">Alasan: ${esc(x.alasan)}${d.dariAtasan && !sendiri ? '. Jadwal berubah setelah kalian berdua menerima.' : ''}</p>
+      ${x.batas ? `<p class="batas">Jawab sebelum ${esc(fmtBatas(x.batas))} (${esc(sisaWaktu(x.batas))}). Lewat dari itu otomatis kedaluwarsa.</p>` : ''}
       <div class="two"><button class="btn" data-jt="${esc(x.id)}" data-v="1">Terima</button><button class="btn danger" data-jt="${esc(x.id)}" data-v="0">Tolak</button></div></div>`;
   }).join('') : '';
   const blokSkc = skc.buka && skc.sk && skc.sk.length ? `<h2>Ganti sakit jadi cuti</h2>
@@ -849,11 +885,19 @@ function viewAbsen() {
       <span>${x.telat ? `<span class="pill no">Telat ${x.telat} m</span>` : ''}${x.jenis === 'Lembur' && x.approval ? pill(x.approval) : ''}</span></div>`).join('')
       : '<p class="muted">Belum ada catatan hari ini.</p>'}
     <h2>Pengajuan saya</h2>
-    ${st.pengajuan.length ? st.pengajuan.map(x => `<div class="row"><span><b>${esc(x.jenis)}</b><small>${esc(ajuDesc(x))}. Ke ${esc(x.atasan)}${x.catatan ? '. Catatan: ' + esc(x.catatan) : ''}</small></span>${pill(x.status)}</div>`).join('')
+    ${st.pengajuan.length ? st.pengajuan.map(x => {
+      const tunggu = PENDING.includes(x.status) && !x.lewat, d = x.detail || {};
+      const bisaBatal = tunggu && !d.dariAtasan;
+      return `<div class="row"><span><b>${esc(x.jenis)}</b><small>${esc(ajuDesc(x))}. Ke ${esc(x.atasan)}${x.catatan ? '. Catatan: ' + esc(x.catatan) : ''}</small>
+        ${tunggu && x.batas ? `<small class="batas">Batas konfirmasi ${esc(fmtBatas(x.batas))} (${esc(sisaWaktu(x.batas))})</small>` : ''}
+        ${bisaBatal ? `<button class="mini" data-batal="${esc(x.id)}" data-l="${esc(x.jenis + ': ' + ajuDesc(x))}">Batalkan</button>` : ''}</span>
+        ${pill(x.lewat ? 'Kedaluwarsa' : x.status)}</div>`; }).join('')
       : '<p class="muted">Belum ada pengajuan.</p>'}`);
   const on = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
   on('bSelesai', selesaiAktif); on('bIst', mulaiIstirahat); on('bTI', formTidakIstirahat);
   on('bMakan', mulaiMakan); on('bLembur', formLembur); on('bCuti', formCuti); on('bSkc', ajukanSakitCuti); on('bTukar', pilihTukar);
+  document.querySelectorAll('[data-batal]').forEach(b => b.onclick = () => batalkan(b.dataset.batal, b.dataset.l));
+  tandaiDilihat();
   document.querySelectorAll('[data-jt]').forEach(b => b.onclick = () => jawabTukar(b.dataset.jt, b.dataset.v === '1'));
   S.poll = setInterval(async () => { if (S.view !== 'absen' || document.querySelector('.scrim,#busy')) return;
     try { await refreshStatus(); render(); } catch (e) {} }, 45000);
@@ -866,7 +910,7 @@ const apKey = x => x.tipe + ':' + x.id;
 const apJenis = x => x.tipe === 'aktivitas' ? 'Lembur' : x.jenis;
 async function viewSetuju() {
   S.apSel = S.apSel || {}; S.apCat = S.apCat || {};
-  shell('<h2>Menunggu persetujuan</h2><div id="ap" class="loading">Memuat…</div>');
+  shell('<h2>Menunggu persetujuan</h2><div id="ap" class="loading">Memuat…</div><div id="apm"></div>');
   await muatSetuju();
   S.poll = setInterval(() => {
     if (S.view !== 'setuju' || document.querySelector('.scrim,#busy') || document.activeElement && document.activeElement.classList.contains('cat')) return;
@@ -874,10 +918,13 @@ async function viewSetuju() {
   }, 30000);
 }
 async function muatSetuju(diam) {
-  let list;
-  try { list = await api('persetujuan'); }
+  let list, r;
+  try { r = await api('persetujuan'); }
   catch (e) { if (!diam) { const el = document.getElementById('ap'); if (el) el.textContent = e.message; } return; }
   if (S.view !== 'setuju') return;
+  list = Array.isArray(r) ? r : (r.list || []);
+  S.apMenunggu = Array.isArray(r) ? [] : (r.menungguStaf || []);
+  gambarMenunggu();
   const ada = {}; list.forEach(x => ada[apKey(x)] = 1);
   Object.keys(S.apSel).forEach(k => { if (!ada[k]) { delete S.apSel[k]; delete S.apCat[k]; } }); // yang sudah diputuskan orang lain dibuang
   if (S.st) S.st.pending = list.length;
@@ -888,6 +935,7 @@ function gambarSetuju() {
   const list = S.apList || [], el = document.getElementById('ap'); if (!el) return;
   el.className = '';
   const bar = document.getElementById('apbar'); if (bar) bar.remove();
+  el.style.paddingBottom = list.length ? '' : '0';
   if (!list.length) { el.innerHTML = '<p class="muted">Tidak ada yang menunggu. Semua sudah diputuskan.</p>'; return; }
   const jenisAda = [...new Set(list.map(apJenis))];
   const nSel = list.filter(x => S.apSel[apKey(x)]).length;
@@ -909,6 +957,7 @@ function gambarSetuju() {
           <span class="k">${esc(apJenis(x))}: ${esc(titleCase(x.staf))}</span></label>
         ${det}
         <p class="muted">Konsultasi ke ${esc(x.atasan)}</p>
+        ${x.batas ? `<p class="batas">Putuskan sebelum ${esc(fmtBatas(x.batas))} (${esc(sisaWaktu(x.batas))})</p>` : ''}
         <input class="cat" data-i="${i}" value="${esc(S.apCat[k] || '')}" placeholder="Catatan (opsional, ikut terkirim)">
       </div>`;
     }).join('')}`;
@@ -928,6 +977,19 @@ function gambarSetuju() {
   });
   document.getElementById('apSetuju').onclick = () => konfirmasiSetuju('Disetujui');
   document.getElementById('apTolak').onclick = () => konfirmasiSetuju('Ditolak');
+}
+function gambarMenunggu() {
+  const el = document.getElementById('apm'); if (!el) return;
+  const m = S.apMenunggu || [];
+  el.innerHTML = !m.length ? '' : `<h2>Menunggu konfirmasi staf</h2>
+    <p class="muted" style="margin:0 0 8px">Belum dijawab rekan / staf. Otomatis kedaluwarsa kalau lewat batas; jadwal tidak berubah.</p>
+    ${m.map(x => `<div class="appr"><div class="k">Tukar: ${esc(titleCase(x.staf))}</div>
+      <p>${esc(ajuDesc(x))}</p>
+      <p>Belum menjawab: <b>${esc(x.belum.map(n => titleCase(n)).join(', '))}</b></p>
+      <p class="muted">Diajukan ${esc(fmtBatas(x.waktu))}. Alasan: ${esc(x.alasan)}</p>
+      ${x.batas ? `<p class="batas">Batas ${esc(fmtBatas(x.batas))} (${esc(sisaWaktu(x.batas))})</p>` : ''}
+      <button class="btn danger" data-batal="${esc(x.id)}" data-l="${esc('Tukar ' + titleCase(x.staf) + ': ' + ajuDesc(x))}" style="margin-top:8px">Batalkan pengajuan</button></div>`).join('')}`;
+  el.querySelectorAll('[data-batal]').forEach(b => b.onclick = () => batalkan(b.dataset.batal, b.dataset.l));
 }
 function konfirmasiSetuju(keputusan) {
   const pilih = (S.apList || []).filter(x => S.apSel[apKey(x)]);
