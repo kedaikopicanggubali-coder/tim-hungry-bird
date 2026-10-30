@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#16261F">
+<meta name="theme-color" content="#12201A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tim HB">
 <title>Tim Hungry Bird</title>
@@ -13,21 +13,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#16261F; --leaf:#2E6B4E; --paper:#F4F6F4; --card:#FFFFFF; --line:#DCE3DE; --mute:#5E6E66; --danger:#B3261E;
-    --P:#F6D365; --PI:#E9B949; --M:#B9D3DE; --S:#F7B69A; --SC:#F2C38B; --L:#2C2F2D; --SK:#D9C6F0; --C:#BFE3C8;
+    --ink:#12201A; --leaf:#1F7A4D; --paper:#EEF2EF; --card:#FFFFFF; --line:#C9D3CD; --mute:#4A5952; --danger:#C62828;
+    --ok:#1F7A4D; --warn:#E07B00;
+    /* kode shift: beda warna jelas, teks gelap tetap terbaca di layar terang */
+    --P:#FFD54F; --PI:#FFA726; --M:#64B5F6; --S:#FF8A80; --SC:#B0BEC5; --L:#263238; --SK:#CE93D8; --C:#81C784;
     --display:'Bricolage Grotesque', 'Arial Narrow', sans-serif;
     --body:'Atkinson Hyperlegible', system-ui, sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
-  button{font:inherit;color:inherit;cursor:pointer}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;min-height:44px}
+  button:active{transform:scale(.98)}
   button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
-  .wrap{max-width:560px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px calc(110px + env(safe-area-inset-bottom))}
   header.top{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
   header.top .in{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
   .brand{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
   .brand small{display:block;font-family:var(--body);font-weight:400;font-size:13px;opacity:.75;letter-spacing:0}
-  .icon-btn{background:transparent;border:1px solid rgba(255,255,255,.35);border-radius:10px;padding:8px 12px;font-size:14px}
+  .icon-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.45);border-radius:12px;padding:8px 14px;font-size:14px;font-weight:700}
   h2{font-family:var(--display);font-weight:800;font-size:22px;margin:22px 0 10px;letter-spacing:-.01em}
   .muted{color:var(--mute);font-size:14px}
   /* ticket hari ini */
@@ -42,38 +46,41 @@
   .stat b{display:block;font-family:var(--display);font-size:24px}
   .stat span{font-size:12px;color:var(--mute)}
   .day{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
-  .day.past{opacity:.45}
+  .day.past{opacity:.5}
+  .day{min-height:56px}
   .day.today{background:var(--card);border-radius:12px;border:2px solid var(--ink);padding:10px}
   .day .d{font-family:var(--display);font-weight:600;font-size:15px;line-height:1.1}
   .day .d small{display:block;font-family:var(--body);font-weight:400;font-size:12px;color:var(--mute)}
-  .chip{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:30px;padding:0 8px;border-radius:8px;font-weight:700;font-size:14px;border:1px solid rgba(0,0,0,.08)}
+  .chip{display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:32px;padding:0 8px;border-radius:9px;font-weight:800;font-size:15px;color:#12201A;border:1px solid rgba(0,0,0,.18)}
   .chip.L{color:#fff}
   .soon{margin:22px 0 0;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;font-size:14px;color:var(--mute)}
   /* tim */
   .bar{display:flex;gap:8px;align-items:center;margin:14px 0 8px}
-  .bar input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit}
+  .bar input{flex:1;padding:12px 14px;font-size:16px!important;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit}
   .seg{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
-  .seg button{white-space:nowrap;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:14px}
+  .seg button{white-space:nowrap;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:14px;min-height:40px}
   .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   .weeknav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
-  .weeknav button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px}
+  .weeknav button{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:8px 18px;font-size:22px;line-height:1;min-width:52px}
+  .weeknav button:disabled{opacity:.35}
   .weeknav b{font-family:var(--display);font-size:17px}
   .summary{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;font-size:14px}
   .summary .chip{height:26px;font-size:13px}
   .gridwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
   table{border-collapse:separate;border-spacing:0;width:100%}
   th,td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line)}
-  th{font-size:12px;font-weight:700;color:var(--mute);background:var(--card);position:sticky;top:0}
+  th{font-size:13px;font-weight:700;color:var(--ink);background:var(--card);position:sticky;top:0}
   th.today{color:var(--ink);background:#EAF2EC}
   td.today{background:#F3F8F4}
   .namecol{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;padding-left:10px;min-width:118px;max-width:118px;border-right:1px solid var(--line)}
-  .namecol div{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .namecol small{font-size:11px;color:var(--mute);white-space:nowrap}
+  .namecol div{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .namecol small{font-size:12px;color:var(--mute);white-space:nowrap}
   tr.mine .namecol{box-shadow:inset 4px 0 0 var(--leaf)}
-  td .chip{min-width:36px;height:28px;font-size:13px}
-  td.edit .chip{cursor:pointer;outline:1px dashed rgba(22,38,31,.35);outline-offset:2px}
-  td.own .chip,td.tgt .chip{cursor:pointer;outline:2px solid var(--leaf);outline-offset:2px}
-  td.pick .chip{outline:3px solid var(--leaf);outline-offset:2px}
+  td .chip{min-width:40px;height:36px;font-size:14px}
+  td{padding:5px 3px}
+  td.edit .chip{cursor:pointer;outline:2px dashed rgba(18,32,26,.45);outline-offset:2px}
+  td.own .chip,td.tgt .chip{cursor:pointer;outline:3px solid var(--leaf);outline-offset:2px}
+  td.pick .chip{outline:4px solid var(--warn);outline-offset:2px}
   .swapbar{position:sticky;top:64px;z-index:4;background:var(--leaf);color:#fff;border-radius:12px;padding:10px 12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
   .swapbar button{background:#fff;color:var(--ink);border:0;border-radius:8px;padding:6px 10px}
   /* riwayat */
@@ -84,10 +91,10 @@
   /* form */
   .field{display:block;margin:12px 0}
   .field span{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
-  .field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font:inherit;background:var(--card)}
-  .btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-weight:700;font-size:16px;background:var(--ink);color:#fff;margin-top:12px}
-  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
-  .btn.danger{background:var(--card);color:var(--danger);border:1px solid var(--line)}
+  .field input,.field select,.field textarea{width:100%;padding:13px;font-size:16px!important;border:1px solid var(--line);border-radius:12px;font:inherit;background:var(--card)}
+  .btn{display:block;width:100%;border:0;border-radius:14px;padding:15px;font-weight:800;font-size:16px;background:var(--leaf);color:#fff;margin-top:12px;min-height:52px}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+  .btn.danger{background:var(--card);color:var(--danger);border:1.5px solid #E8B4B0}
   .btn:disabled{opacity:.5}
   .err{color:var(--danger);font-size:14px;margin-top:8px;min-height:1em}
   .note-box{background:#FFF6D6;border:1px solid #EED690;border-radius:12px;padding:12px;font-size:14px;margin-top:14px}
@@ -99,38 +106,41 @@
   /* nav bawah */
   nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
   nav.bottom .in{max-width:560px;margin:0 auto;display:flex}
-  nav.bottom button{flex:1;background:none;border:0;padding:8px 4px;border-radius:10px;font-size:13px;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:2px}
-  nav.bottom button svg{width:22px;height:22px}
-  nav.bottom button.on{color:var(--ink);font-weight:700;background:#EAF2EC}
+  nav.bottom{box-shadow:0 -4px 16px rgba(18,32,26,.08)}
+  nav.bottom button{flex:1;background:none;border:0;padding:8px 2px;border-radius:12px;font-size:12px;color:var(--mute);min-height:56px;display:flex;flex-direction:column;align-items:center;gap:2px}
+  nav.bottom button svg{width:24px;height:24px}
+  nav.bottom button.on{color:var(--leaf);font-weight:800;background:#E3F1E8}
   /* sheet */
   .scrim{position:fixed;inset:0;background:rgba(22,38,31,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
-  .sheet{background:var(--paper);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+  .sheet{background:var(--paper);overscroll-behavior:contain;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
   .sheet h3{font-family:var(--display);font-weight:800;font-size:20px;margin:0}
   .codes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
   .codes button{border:2px solid transparent;border-radius:12px;padding:10px 4px;font-weight:700;font-size:15px}
   .codes button small{display:block;font-weight:400;font-size:11px}
   .codes button.on{border-color:var(--ink)}
   .quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-  .quick button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 10px;font-size:13px}
+  .quick button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 12px;font-size:14px;min-height:40px}
   .swapview{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:12px;text-align:center}
   .swapview .side{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px}
-  .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90vw}
+  .toast{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top));transform:translateX(-50%);font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.2);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90vw}
   .loading{padding:60px 0;text-align:center;color:var(--mute)}
   [hidden]{display:none!important}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .two .btn{margin-top:0}
   .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-  .act{border:2px solid var(--ink);border-radius:16px;padding:16px 12px;text-align:left;background:var(--card);min-height:92px;display:flex;flex-direction:column;justify-content:space-between}
+  .act{border:2px solid var(--line);border-radius:18px;padding:16px 14px;box-shadow:0 2px 0 rgba(18,32,26,.06);text-align:left;background:var(--card);min-height:92px;display:flex;flex-direction:column;justify-content:space-between}
   .act b{font-family:var(--display);font-size:18px;line-height:1.1}
   .act small{font-size:13px;color:var(--mute)}
-  .act.primary{background:var(--ink);color:#fff}
+  .act.primary{background:var(--leaf);border-color:var(--leaf);color:#fff}
   .act.primary small{color:rgba(255,255,255,.75)}
   .act.wide{grid-column:1/-1;min-height:64px}
-  .running{margin-top:18px;border-radius:18px;padding:20px;background:var(--ink);color:#fff}
+  .running{margin-top:18px;border-radius:20px;padding:22px 20px;background:var(--ink);color:#fff}
   .running .t{font-family:var(--display);font-weight:800;font-size:64px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-  .running .t.over{color:#FF9A8A}
+  .running .t{color:#9FE3B8}
+  .running .t.warn{color:#FFC266}
+  .running .t.over{color:#FF8A80}
   .running p{margin:6px 0 0;font-size:14px;opacity:.85}
-  .running .btn{background:#fff;color:var(--ink)}
+  .running .btn{background:#fff;color:var(--ink);font-size:18px;min-height:60px}
   .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:15px}
   .row small{display:block;color:var(--mute);font-size:13px}
   .pill{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;background:#E7ECE9}
@@ -139,12 +149,20 @@
   .tm.warn{color:#A15C00}.tm.over{color:var(--danger)}
   .badge{display:inline-block;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px;line-height:18px;padding:0 5px;margin-left:2px}
   .opts{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
-  .opts button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 12px;font-size:14px}
+  .opts button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:9px 14px;font-size:14px;min-height:42px}
   .opts button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   .busy{position:fixed;inset:0;background:rgba(244,246,244,.8);z-index:40;display:flex;align-items:center;justify-content:center;font-weight:700}
   .appr{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
   .appr .k{font-family:var(--display);font-weight:800;font-size:17px}
   .appr p{margin:4px 0;font-size:14px}
+  .appr.sel{border:2px solid var(--leaf);background:#F3F8F4}
+  .aphead{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .aphead input{width:22px;height:22px;accent-color:var(--leaf);flex:none}
+  .appr .cat{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:6px;font:inherit;background:var(--card)}
+  #ap{padding-bottom:72px}
+  .apbar{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom));z-index:7;padding:0 12px}
+  .apbar .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:auto 1fr 1.4fr;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px;box-shadow:0 6px 20px rgba(22,38,31,.15);font-size:14px}
+  .apbar .btn{margin:0;padding:11px}
   @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}}
 </style>
 </head>
@@ -271,6 +289,7 @@ const ICON = {
 function shell(inner) {
   const tabs = [['saya','Saya'],['absen','Absen'],['tim','Tim']].concat(canEditAny() ? [['setuju','Setujui']] : []).concat([['akun','Akun']]);
   const badge = k => (k === 'setuju' && S.st && S.st.pending) ? `<span class="badge">${S.st.pending}</span>` : '';
+  const ab = document.getElementById('apbar'); if (ab) ab.remove();
   $app.innerHTML = `
     <header class="top"><div class="in">
       <div class="brand">Tim Hungry Bird<small>${esc(titleCase(S.me.nama))} · ${esc(S.me.posisi)}</small></div>
@@ -301,6 +320,7 @@ async function boot(keepView) {
 function render() {
   if (!S.token || !S.data) return boot();
   clearInterval(S.poll);
+  if (S.view === 'absen') locMulai(); else locBerhenti(); // GPS hanya aktif di halaman Absen
   ({ saya: viewSaya, absen: viewAbsen, tim: viewTim, riwayat: viewRiwayat, setuju: viewSetuju, akun: viewAkun }[S.view] || viewSaya)();
 }
 
@@ -334,6 +354,7 @@ function viewSaya() {
       <div class="stat"><b>${hitung('SK')}</b><span>Sakit</span></div>
       <div class="stat"><b>${hitung('C')}</b><span>Cuti</span></div>
     </div>
+    <button class="btn ghost" id="sayaTukar">⇄ Tukar shift / libur</button>
     <h2>Jadwal periode ini</h2>
     <div id="daylist">${d.dates.map((iso, i) => {
       const dt = toDate(iso);
@@ -344,6 +365,7 @@ function viewSaya() {
         <div>${chip(me.codes[i])}</div></div>`;
     }).join('')}</div>
     <div class="soon">Istirahat, jam makan, lembur dan cuti ada di menu Absen.</div>`);
+  const bt = document.getElementById('sayaTukar'); if (bt) bt.onclick = pilihTukar;
 }
 
 /* ===== VIEW: TIM ===== */
@@ -387,9 +409,10 @@ function viewTim() {
           return `<td class="${iso === d.today ? 'today' : ''} ${mode} ${pick ? 'pick' : ''}" ${mode ? `data-m="${mode}" data-n="${esc(s.nama)}" data-t="${iso}" data-k="${esc(s.codes[i])}"` : ''}>${chip(s.codes[i])}</td>`;
         }).join('')}</tr>`).join('')}</tbody>
     </table></div>
-    ${!canEditAny() ? '<p class="muted">Mau tukar shift atau libur? Ketuk jadwalmu sendiri (bergaris hijau), lalu pilih sel tujuan.</p>' : ''}
+    ${S.me.edit !== 'semua' && !S.reqA ? '<button class="btn" id="timTukar">⇄ Ajukan tukar shift / libur</button><p class="muted">Atau ketuk langsung jadwalmu sendiri (bergaris hijau), lalu pilih sel tujuan.</p>' : ''}
     ${canEditAny() ? '<p class="muted">Sel bergaris putus-putus bisa kamu ubah. Ketuk untuk mengganti shift atau menukar jadwal.</p><button class="btn ghost" id="toRiwayat">Lihat riwayat perubahan jadwal</button>' : ''}`);
   const tr = document.getElementById('toRiwayat'); if (tr) tr.onclick = () => { S.view = 'riwayat'; render(); };
+  const tt = document.getElementById('timTukar'); if (tt) tt.onclick = pilihTukar;
   const qi = document.getElementById('q');
   qi.oninput = () => { S.q = qi.value; const pos = qi.selectionStart; viewTim(); const n2 = document.getElementById('q'); n2.focus(); n2.setSelectionRange(pos, pos); };
   document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { S.div = b.dataset.d; viewTim(); });
@@ -506,13 +529,36 @@ setInterval(() => {
   });
 }, 1000);
 async function refreshStatus() { setStatus(await api('status')); }
+
+/* ===== LOKASI CEPAT =====
+   Selama halaman Absen terbuka, HP sudah membaca GPS di latar. Saat tombol ditekan,
+   lokasi yang masih segar (< 45 detik, akurat) langsung dipakai, jadi tidak menunggu GPS lagi. */
+const LOC_SEGAR_MS = 45000, LOC_AKURAT_M = 150;
+const locOk = l => l && Date.now() - l.ts < LOC_SEGAR_MS && l.acc <= LOC_AKURAT_M;
+function simpanLoc(p) {
+  const l = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy), ts: Date.now() };
+  if (!S.loc || l.acc <= S.loc.acc || Date.now() - S.loc.ts > 15000) S.loc = l; // simpan yang lebih akurat / lebih baru
+  return l;
+}
+function locMulai() {
+  if (S.locWatch != null || !navigator.geolocation) return;
+  S.locWatch = navigator.geolocation.watchPosition(simpanLoc, () => {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
+}
+function locBerhenti() {
+  if (S.locWatch != null) { navigator.geolocation.clearWatch(S.locWatch); S.locWatch = null; }
+}
+const lokasiDari = l => ({ lat: l.lat, lng: l.lng, acc: l.acc });
 function getLoc() {
+  if (locOk(S.loc)) return Promise.resolve(lokasiDari(S.loc));
   return new Promise((res, rej) => {
     if (!navigator.geolocation) return rej(new Error('Browser ini tidak bisa membaca lokasi.'));
     navigator.geolocation.getCurrentPosition(
-      p => res({ lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy) }),
-      e => rej(new Error(e.code === 1 ? 'Akses lokasi ditolak. Izinkan lokasi untuk situs ini di pengaturan browser, lalu coba lagi.' : 'Lokasi belum didapat. Pastikan GPS menyala, lalu coba lagi.')),
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+      p => res(lokasiDari(simpanLoc(p))),
+      e => {
+        if (S.loc && Date.now() - S.loc.ts < 120000) return res(lokasiDari(S.loc)); // cadangan: lokasi 2 menit terakhir
+        rej(new Error(e.code === 1 ? 'Akses lokasi ditolak. Izinkan lokasi untuk situs ini di pengaturan browser, lalu coba lagi.' : 'Lokasi belum didapat. Pastikan GPS menyala, lalu coba lagi.'));
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
   });
 }
 function busy(t) { let b = document.getElementById('busy'); if (!t) { if (b) b.remove(); return; }
@@ -523,7 +569,11 @@ function showError(msg) {
 }
 async function jalankan(label, fn, sukses) {
   busy(label);
-  try { await fn(); await refreshStatus(); busy(false); if (sukses) toast(sukses); render(); }
+  try {
+    const r = await fn();
+    if (r && r.status) setStatus(r.status); else await refreshStatus(); // server sudah kirim status → tanpa request kedua
+    busy(false); if (sukses) toast(typeof sukses === 'function' ? sukses(r) : sukses); render();
+  }
   catch (e) { busy(false); showError(e.message); }
 }
 
@@ -558,20 +608,30 @@ function gerbang(judul, formHtml, onKirim) {
 }
 
 function mulaiIstirahat() {
-  jalankan('Mengambil lokasi…', async () => { const l = await getLoc(); busy('Menyimpan…'); await api('mulai', Object.assign({ jenis: 'Istirahat' }, l)); },
+  jalankan(locOk(S.loc) ? 'Menyimpan…' : 'Mengambil lokasi…', async () => { const l = await getLoc(); busy('Menyimpan…'); return api('mulai', Object.assign({ jenis: 'Istirahat' }, l)); },
     'Istirahat dimulai. Jatah ' + S.st.cfg.istirahat + ' menit.');
 }
 function mulaiMakan() {
-  jalankan('Menyimpan…', async () => { let l = {}; try { l = await getLoc(); } catch (e) {} await api('mulai', Object.assign({ jenis: 'Makan' }, l)); }, 'Selamat makan');
+  jalankan('Menyimpan…', async () => { let l = {}; try { l = await getLoc(); } catch (e) {} return api('mulai', Object.assign({ jenis: 'Makan' }, l)); }, 'Selamat makan');
 }
 function selesaiAktif() {
-  const j = S.st.aktif.jenis;
-  jalankan('Mengambil lokasi…', async () => {
+  const j = S.st.aktif.jenis, tap = nowMs(); // jam saat tombol DITEKAN (disinkron ke jam server)
+  // Bekukan timer di layar detik ini juga
+  document.querySelectorAll('.running [data-start]').forEach(el => { el.textContent = mmss(tap - (+el.dataset.start)); el.removeAttribute('data-start'); });
+  const b = document.getElementById('bSelesai'); if (b) { b.disabled = true; b.textContent = 'Tercatat ' + jam(tap) + ', menyimpan…'; }
+  jalankan(locOk(S.loc) ? 'Menyimpan…' : 'Mengambil lokasi…', async () => {
     let l = {};
     if (j === 'Makan') { try { l = await getLoc(); } catch (e) {} } else l = await getLoc();
-    busy('Menyimpan…');
-    const r = await api('selesai', l);
+    busy('Menyimpan… (selesai tercatat jam ' + jam(tap) + ')');
+    const kirim = Object.assign({ t: tap }, l);
+    let r;
+    try { r = await api('selesai', kirim); }
+    catch (e) { // sinyal putus: coba sekali lagi (aman, server tidak mencatat dua kali)
+      if (!/Koneksi|terhubung/.test(e.message)) throw e;
+      busy('Sinyal lemah, mencoba lagi…'); r = await api('selesai', kirim);
+    }
     if (r.telat) setTimeout(() => showError('Istirahat tercatat ' + r.menit + ' menit, telat ' + r.telat + ' menit.'), 300);
+    return r;
   }, j + ' selesai');
 }
 function formLembur() {
@@ -580,8 +640,9 @@ function formLembur() {
       const catatan = q('#lCat').value.trim();
       if (catatan.length < 3) throw new Error('Isi pekerjaan lembur.');
       const l = await getLoc();
-      await api('mulai', Object.assign({ jenis: 'Lembur', atasan, catatan }, l));
-      await refreshStatus(); toast('Lembur dimulai'); render();
+      const r = await api('mulai', Object.assign({ jenis: 'Lembur', atasan, catatan }, l));
+      if (r && r.status) setStatus(r.status); else await refreshStatus();
+      toast('Lembur dimulai'); render();
     });
 }
 function formTidakIstirahat() {
@@ -639,6 +700,32 @@ function kirimReqTukar(a, b) {
       render();
     });
 }
+/* Tombol "Tukar shift / libur": pilih tanggalmu dulu, lalu lompat ke tab Tim di minggu yang benar */
+function pilihTukar() {
+  if (S.me.edit === 'semua') {
+    S.view = 'tim'; S.reqA = null; render();
+    toast('Ketuk sel bergaris putus-putus untuk ubah atau tukar langsung');
+    return;
+  }
+  const d = S.data, me = myRow();
+  if (!me) { showError('Namamu belum ada di jadwal bulan ini. Hubungi atasanmu.'); return; }
+  const list = d.dates.map((iso, i) => ({ iso, i, k: me.codes[i] })).filter(x => x.iso >= d.today);
+  if (!list.length) { showError('Tidak ada tanggal ke depan di jadwal periode ini.'); return; }
+  const sc = openSheet(`<h3>Tukar shift / libur</h3>
+    <p class="muted" style="margin:6px 0 10px">Pilih tanggal jadwalmu yang mau ditukar. Setelah itu pilih sel tujuan di jadwal tim: milik rekan satu divisi, atau tanggal lain milikmu (geser libur).</p>
+    ${list.map(x => `<button type="button" class="row" data-i="${x.i}" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left">
+      <span><b>${esc(tglPanjang(x.iso))}</b><small>${esc(jamText(x.k))}</small></span>${chip(x.k)}</button>`).join('')}
+    <button class="btn ghost" id="ptBatal">Batal</button>`);
+  sc.querySelector('#ptBatal').onclick = () => sc.remove();
+  sc.querySelectorAll('button[data-i]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, base = Math.max(0, d.dates.indexOf(d.today));
+    sc.remove();
+    S.reqA = { nama: me.nama, tgl: d.dates[i], dari: me.codes[i] };
+    S.week = Math.floor((i - base) / 7);
+    S.view = 'tim'; render();
+    toast('Sekarang ketuk sel tujuan (bergaris hijau)');
+  });
+}
 function jawabTukar(id, terima) {
   jalankan('Menyimpan…', () => api('jawabTukar', { id, terima: terima ? '1' : '0' }), terima ? 'Diterima, menunggu atasan' : 'Permintaan ditolak');
 }
@@ -681,7 +768,8 @@ function viewAbsen() {
     }
     if (info && info.kerja && !info.istirahat) acts.push(`<button class="act primary" id="bMakan"><b>Mulai makan</b><small>Shift tanpa istirahat</small></button>`);
     acts.push(`<button class="act" id="bLembur"><b>Mulai lembur</b><small>Setelah shift selesai</small></button>`);
-    acts.push(`<button class="act ${acts.length % 2 ? '' : 'wide'}" id="bCuti"><b>Ajukan cuti</b><small>Jatah 12 hari per tahun</small></button>`);
+    acts.push(`<button class="act" id="bCuti"><b>Ajukan cuti</b><small>Jatah 12 hari per tahun</small></button>`);
+    acts.push(`<button class="act ${acts.length % 2 ? '' : 'wide'}" id="bTukar"><b>Tukar shift / libur</b><small>Dengan rekan atau geser liburmu</small></button>`);
     const ket = !info ? 'Jadwal hari ini belum diisi.' : !info.kerja ? 'Hari ini kamu ' + info.nama.toLowerCase() + '.' :
       'Shift ' + st.kode + ' ' + info.mulai + '–' + info.selesai + (info.istirahat ? ', istirahat ' + info.istirahat + ' menit.' : ', tanpa istirahat.');
     top = `<p class="muted" style="margin:18px 0 0">${esc(ket)}</p>
@@ -717,40 +805,116 @@ function viewAbsen() {
       : '<p class="muted">Belum ada pengajuan.</p>'}`);
   const on = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
   on('bSelesai', selesaiAktif); on('bIst', mulaiIstirahat); on('bTI', formTidakIstirahat);
-  on('bMakan', mulaiMakan); on('bLembur', formLembur); on('bCuti', formCuti); on('bSkc', ajukanSakitCuti);
+  on('bMakan', mulaiMakan); on('bLembur', formLembur); on('bCuti', formCuti); on('bSkc', ajukanSakitCuti); on('bTukar', pilihTukar);
   document.querySelectorAll('[data-jt]').forEach(b => b.onclick = () => jawabTukar(b.dataset.jt, b.dataset.v === '1'));
   S.poll = setInterval(async () => { if (S.view !== 'absen' || document.querySelector('.scrim,#busy')) return;
     try { await refreshStatus(); render(); } catch (e) {} }, 45000);
 }
 
 /* ===== VIEW: SETUJUI ===== */
+/* Checklist: centang beberapa pengajuan → Setujui / Tolak sekaligus.
+   Pengajuan yang sudah diputuskan atasan lain otomatis hilang (daftar disegarkan tiap 30 detik). */
+const apKey = x => x.tipe + ':' + x.id;
+const apJenis = x => x.tipe === 'aktivitas' ? 'Lembur' : x.jenis;
 async function viewSetuju() {
+  S.apSel = S.apSel || {}; S.apCat = S.apCat || {};
   shell('<h2>Menunggu persetujuan</h2><div id="ap" class="loading">Memuat…</div>');
+  await muatSetuju();
+  S.poll = setInterval(() => {
+    if (S.view !== 'setuju' || document.querySelector('.scrim,#busy') || document.activeElement && document.activeElement.classList.contains('cat')) return;
+    muatSetuju(true);
+  }, 30000);
+}
+async function muatSetuju(diam) {
   let list;
-  try { list = await api('persetujuan'); } catch (e) { const el = document.getElementById('ap'); if (el) el.textContent = e.message; return; }
+  try { list = await api('persetujuan'); }
+  catch (e) { if (!diam) { const el = document.getElementById('ap'); if (el) el.textContent = e.message; } return; }
+  if (S.view !== 'setuju') return;
+  const ada = {}; list.forEach(x => ada[apKey(x)] = 1);
+  Object.keys(S.apSel).forEach(k => { if (!ada[k]) { delete S.apSel[k]; delete S.apCat[k]; } }); // yang sudah diputuskan orang lain dibuang
   if (S.st) S.st.pending = list.length;
-  const el = document.getElementById('ap'); if (!el) return;
+  S.apList = list;
+  gambarSetuju();
+}
+function gambarSetuju() {
+  const list = S.apList || [], el = document.getElementById('ap'); if (!el) return;
   el.className = '';
+  const bar = document.getElementById('apbar'); if (bar) bar.remove();
   if (!list.length) { el.innerHTML = '<p class="muted">Tidak ada yang menunggu. Semua sudah diputuskan.</p>'; return; }
-  el.innerHTML = list.map((x, i) => {
-    let det = '';
-    if (x.tipe === 'aktivitas') det = `<p>${esc(tglPanjang(x.tanggal))}, ${jam(x.mulai)}–${jam(x.selesai)}: <b>${durTxt(x.menit)}</b></p><p>Pekerjaan: ${esc(x.catatan)}</p>`;
-    else if (x.jenis === 'Tukar' || x.jenis === 'Sakit ke Cuti') det = `<p>${esc(ajuDesc(x))}</p><p>Alasan: ${esc(x.alasan)}</p>${x.jenis === 'Sakit ke Cuti' ? '<p class="muted">Cek sisa cuti staf sebelum menyetujui.</p>' : ''}`;
-    else if (x.jenis === 'Cuti') det = `<p>${esc(tglPanjang(x.mulai))}${x.selesai !== x.mulai ? ' s/d ' + esc(tglPanjang(x.selesai)) : ''} (${x.hari} hari)</p><p>Alasan: ${esc(x.alasan)}</p>`;
-    else det = `<p>${esc(tglPanjang(x.mulai))}</p><p>Alasan: ${esc(x.alasan)}</p>`;
-    return `<div class="appr"><div class="k">${esc(x.tipe === 'aktivitas' ? 'Lembur' : x.jenis)}: ${esc(titleCase(x.staf))}</div>${det}
-      <p class="muted">Konsultasi ke ${esc(x.atasan)}</p>
-      <input class="cat" data-i="${i}" placeholder="Catatan (opsional)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:6px;font:inherit">
-      <div class="two" style="margin-top:8px"><button class="btn" data-i="${i}" data-k="Disetujui">Setujui</button><button class="btn danger" data-i="${i}" data-k="Ditolak">Tolak</button></div></div>`;
-  }).join('');
-  el.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => {
-    const x = list[+b.dataset.i], catatan = el.querySelector(`.cat[data-i="${b.dataset.i}"]`).value.trim();
-    jalankan('Menyimpan…', async () => {
-      const r = await api('putuskan', { tipe: x.tipe, id: x.id, keputusan: b.dataset.k, catatan });
-      if (r.pesan) setTimeout(() => toast(r.pesan), 400);
-      if (['Cuti', 'Tukar', 'Sakit ke Cuti'].includes(x.jenis) && b.dataset.k === 'Disetujui') S.data = await api('jadwal');
-    }, b.dataset.k === 'Disetujui' ? 'Disetujui' : 'Ditolak');
+  const jenisAda = [...new Set(list.map(apJenis))];
+  const nSel = list.filter(x => S.apSel[apKey(x)]).length;
+  el.innerHTML = `
+    <p class="muted" style="margin:0 0 6px">Review dulu, centang yang sudah oke, lalu Setujui/Tolak sekaligus di bawah.</p>
+    <div class="seg"><button data-pilih="__all" class="${nSel === list.length ? 'on' : ''}">${nSel === list.length ? 'Batal centang semua' : 'Centang semua (' + list.length + ')'}</button>
+      ${jenisAda.length > 1 ? jenisAda.map(j => `<button data-pilih="${esc(j)}">${esc(j)} (${list.filter(x => apJenis(x) === j).length})</button>`).join('') : ''}</div>
+    ${list.map((x, i) => {
+      const k = apKey(x), on = !!S.apSel[k];
+      let det = '';
+      if (x.tipe === 'aktivitas') det = `<p>${esc(tglPanjang(x.tanggal))}, ${jam(x.mulai)}–${jam(x.selesai)}: <b>${durTxt(x.menit)}</b></p><p>Pekerjaan: ${esc(x.catatan)}</p>`;
+      else if (x.jenis === 'Tukar' || x.jenis === 'Sakit ke Cuti') det = `<p>${esc(ajuDesc(x))}</p><p>Alasan: ${esc(x.alasan)}</p>${x.jenis === 'Sakit ke Cuti' ? '<p class="muted">Cek sisa cuti staf sebelum menyetujui.</p>' : ''}`;
+      else if (x.jenis === 'Cuti') det = `<p>${esc(tglPanjang(x.mulai))}${x.selesai !== x.mulai ? ' s/d ' + esc(tglPanjang(x.selesai)) : ''} (${x.hari} hari)</p><p>Alasan: ${esc(x.alasan)}</p>`;
+      else det = `<p>${esc(tglPanjang(x.mulai))}</p><p>Alasan: ${esc(x.alasan)}</p>`;
+      return `<div class="appr ${on ? 'sel' : ''}" data-i="${i}">
+        <label class="aphead"><input type="checkbox" class="apcb" data-i="${i}" ${on ? 'checked' : ''}>
+          <span class="k">${esc(apJenis(x))}: ${esc(titleCase(x.staf))}</span></label>
+        ${det}
+        <p class="muted">Konsultasi ke ${esc(x.atasan)}</p>
+        <input class="cat" data-i="${i}" value="${esc(S.apCat[k] || '')}" placeholder="Catatan (opsional, ikut terkirim)">
+      </div>`;
+    }).join('')}`;
+  document.body.insertAdjacentHTML('beforeend', `<div id="apbar" class="apbar"><div class="in">
+    <span><b>${nSel}</b> dipilih</span>
+    <button class="btn danger" id="apTolak" ${nSel ? '' : 'disabled'}>Tolak</button>
+    <button class="btn" id="apSetuju" ${nSel ? '' : 'disabled'}>Setujui ${nSel || ''}</button></div></div>`);
+  el.querySelectorAll('.apcb').forEach(cb => cb.onchange = () => {
+    const k = apKey(list[+cb.dataset.i]); if (cb.checked) S.apSel[k] = 1; else delete S.apSel[k]; gambarSetuju();
   });
+  el.querySelectorAll('.cat').forEach(inp => inp.oninput = () => { S.apCat[apKey(list[+inp.dataset.i])] = inp.value; });
+  el.querySelectorAll('[data-pilih]').forEach(b => b.onclick = () => {
+    const j = b.dataset.pilih;
+    if (j === '__all') { const semua = nSel === list.length; S.apSel = {}; if (!semua) list.forEach(x => S.apSel[apKey(x)] = 1); }
+    else list.filter(x => apJenis(x) === j).forEach(x => S.apSel[apKey(x)] = 1);
+    gambarSetuju();
+  });
+  document.getElementById('apSetuju').onclick = () => konfirmasiSetuju('Disetujui');
+  document.getElementById('apTolak').onclick = () => konfirmasiSetuju('Ditolak');
+}
+function konfirmasiSetuju(keputusan) {
+  const pilih = (S.apList || []).filter(x => S.apSel[apKey(x)]);
+  if (!pilih.length) return;
+  const per = {}; pilih.forEach(x => per[apJenis(x)] = (per[apJenis(x)] || 0) + 1);
+  const tolak = keputusan === 'Ditolak';
+  const sc = openSheet(`<h3>${tolak ? 'Tolak' : 'Setujui'} ${pilih.length} pengajuan?</h3>
+    <p class="muted" style="margin:6px 0">${Object.keys(per).map(j => esc(j) + ': ' + per[j]).join(' · ')}</p>
+    <div style="max-height:30vh;overflow:auto">${pilih.map(x => `<div class="row"><span><b>${esc(titleCase(x.staf))}</b><small>${esc(apJenis(x))}${x.tipe === 'aktivitas' ? ', ' + durTxt(x.menit) : ', ' + esc(ajuDesc(x))}</small></span></div>`).join('')}</div>
+    ${tolak && pilih.some(x => !S.apCat[apKey(x)]) ? '<p class="muted">Tip: isi catatan di kartu supaya staf tahu alasan penolakan.</p>' : ''}
+    ${!tolak && pilih.some(x => ['Cuti', 'Tukar', 'Sakit ke Cuti'].includes(x.jenis)) ? '<p class="muted">Cuti, Tukar dan Sakit→Cuti yang disetujui langsung mengubah jadwal.</p>' : ''}
+    <div class="err" id="kErr"></div>
+    <button class="btn ${tolak ? 'danger' : ''}" id="kYa">Ya, ${tolak ? 'tolak' : 'setujui'} semua</button>
+    <button class="btn ghost" id="kNo">Kembali</button>`);
+  sc.querySelector('#kNo').onclick = () => sc.remove();
+  sc.querySelector('#kYa').onclick = async () => {
+    sc.remove(); busy('Memproses ' + pilih.length + ' pengajuan…');
+    try {
+      const items = pilih.map(x => ({ tipe: x.tipe, id: x.id, catatan: (S.apCat[apKey(x)] || '').trim().slice(0, 200) }));
+      const r = await api('putuskanBanyak', { keputusan, items: JSON.stringify(items) });
+      r.ok.forEach(o => { const k = pilih.find(x => x.id === o.id); if (k) { delete S.apSel[apKey(k)]; delete S.apCat[apKey(k)]; } });
+      if (!tolak && pilih.some(x => ['Cuti', 'Tukar', 'Sakit ke Cuti'].includes(x.jenis))) { try { S.data = await api('jadwal'); } catch (e) {} }
+      try { await refreshStatus(); } catch (e) {}
+      busy(false);
+      hasilSetuju(r);
+      await muatSetuju(true);
+    } catch (e) { busy(false); showError(e.message); }
+  };
+}
+function hasilSetuju(r) {
+  const pesan = r.ok.filter(o => o.pesan);
+  if (!r.gagal.length && !pesan.length) { toast(r.ok.length + ' pengajuan ' + r.keputusan.toLowerCase()); return; }
+  const sc = openSheet(`<h3>${r.ok.length} ${esc(r.keputusan.toLowerCase())}${r.gagal.length ? ', ' + r.gagal.length + ' dilewati' : ''}</h3>
+    ${pesan.map(o => `<div class="row"><span><b>${esc(titleCase(o.label))}</b><small>${esc(o.pesan)}</small></span><span class="pill ok">OK</span></div>`).join('')}
+    ${r.gagal.map(g => `<div class="row"><span><b>${esc(titleCase(g.label))}</b><small>${esc(g.error)}</small></span><span class="pill no">Dilewati</span></div>`).join('')}
+    <button class="btn" id="hOk">Oke</button>`);
+  sc.querySelector('#hOk').onclick = () => sc.remove();
 }
 
 /* ===== VIEW: RIWAYAT ===== */
