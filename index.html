@@ -155,6 +155,15 @@
   .appr{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
   .appr .k{font-family:var(--display);font-weight:800;font-size:17px}
   .appr p{margin:4px 0;font-size:14px}
+  .cuti{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .cuti-top{display:flex;justify-content:space-between;align-items:baseline;font-weight:700}
+  .cuti-top b{font-family:var(--display);font-size:26px}
+  .cuti-top b small{font-family:var(--body);font-size:14px;color:var(--mute);font-weight:400}
+  .cuti-bar{height:8px;border-radius:4px;background:#E3E9E5;margin:6px 0;overflow:hidden}
+  .cuti-bar i{display:block;height:100%;border-radius:4px}
+  .cuti>small{color:var(--mute);font-size:13px}
+  .cutiinfo{background:#EAF5EE;border-radius:8px;padding:6px 10px}
+  .cutiinfo.kurang{background:#FDE7E5;color:#8A1F17}
   .appr.sel{border:2px solid var(--leaf);background:#F3F8F4}
   .aphead{display:flex;align-items:center;gap:10px;cursor:pointer}
   .aphead input{width:22px;height:22px;accent-color:var(--leaf);flex:none}
@@ -325,6 +334,17 @@ function render() {
 }
 
 /* ===== VIEW: SAYA ===== */
+/* ===== SISA CUTI ===== */
+function cutiKartu(c) {
+  if (!c) return '';
+  const pct = c.jatah ? Math.max(0, Math.min(100, c.sisa / c.jatah * 100)) : 0;
+  const warna = c.sisa <= 0 ? 'var(--danger)' : c.sisa <= 3 ? 'var(--warn)' : 'var(--leaf)';
+  return `<div class="cuti">
+    <div class="cuti-top"><span>Sisa cuti</span><b style="color:${warna}">${c.sisa}<small> / ${c.jatah} hari</small></b></div>
+    <div class="cuti-bar"><i style="width:${pct}%;background:${warna}"></i></div>
+    <small>Terpakai ${c.terpakai} hari${c.bulan ? ' · jatah baru turun tiap ' + esc(c.bulan) : ''}</small></div>`;
+}
+const cutiTeks = c => !c ? '' : (c.sisa <= 0 ? 'Cuti habis' : 'Sisa ' + c.sisa + ' dari ' + c.jatah + ' hari');
 function viewSaya() {
   const d = S.data, me = myRow();
   if (!me) { shell(`<div class="note-box">Namamu belum ada di jadwal bulan ini. Hubungi atasanmu.</div>`); return; }
@@ -354,6 +374,7 @@ function viewSaya() {
       <div class="stat"><b>${hitung('SK')}</b><span>Sakit</span></div>
       <div class="stat"><b>${hitung('C')}</b><span>Cuti</span></div>
     </div>
+    ${cutiKartu(S.data.me.cuti)}
     <button class="btn ghost" id="sayaTukar">⇄ Tukar shift / libur</button>
     <h2>Jadwal periode ini</h2>
     <div id="daylist">${d.dates.map((iso, i) => {
@@ -656,13 +677,20 @@ function formTidakIstirahat() {
     });
 }
 function formCuti() {
-  const t = S.st.today;
+  const t = S.st.today, c = S.st.cuti;
   gerbang('Ajukan cuti', `
+    ${c ? `<div class="note-box" style="margin-top:8px">Sisa cutimu: <b>${c.sisa} hari</b> dari ${c.jatah}. Hari libur (L) dalam rentang tanggal tidak memotong cuti.</div>` : ''}
+    <div class="err" id="cWarn"></div>
     <div class="two"><label class="field"><span>Mulai</span><input id="cM" type="date" min="${t}" value="${t}"></label>
     <label class="field"><span>Sampai</span><input id="cS" type="date" min="${t}" value="${t}"></label></div>
     <label class="field"><span>Alasan</span><textarea id="cAl" rows="2" placeholder="Contoh: upacara adat di kampung"></textarea></label>`,
     async (atasan, q) => {
       const mulai = q('#cM').value, selesai = q('#cS').value, alasan = q('#cAl').value.trim();
+      const hari = mulai && selesai ? Math.round((toDate(selesai) - toDate(mulai)) / 864e5) + 1 : 0;
+      if (c && hari > c.sisa && !q('#cWarn').dataset.ok) {
+        q('#cWarn').textContent = 'Pengajuan ' + hari + ' hari melebihi sisa cuti (' + c.sisa + ' hari). Tekan Kirim sekali lagi kalau tetap mau diajukan.';
+        q('#cWarn').dataset.ok = '1'; return false;
+      }
       if (!mulai || !selesai) throw new Error('Isi tanggal cuti.');
       if (selesai < mulai) throw new Error('Tanggal sampai tidak boleh sebelum tanggal mulai.');
       if (alasan.length < 3) throw new Error('Isi alasan cuti.');
@@ -768,7 +796,7 @@ function viewAbsen() {
     }
     if (info && info.kerja && !info.istirahat) acts.push(`<button class="act primary" id="bMakan"><b>Mulai makan</b><small>Shift tanpa istirahat</small></button>`);
     acts.push(`<button class="act" id="bLembur"><b>Mulai lembur</b><small>Setelah shift selesai</small></button>`);
-    acts.push(`<button class="act" id="bCuti"><b>Ajukan cuti</b><small>Jatah 12 hari per tahun</small></button>`);
+    acts.push(`<button class="act" id="bCuti"><b>Ajukan cuti</b><small>${esc(cutiTeks(st.cuti) || 'Perlu persetujuan atasan')}</small></button>`);
     acts.push(`<button class="act ${acts.length % 2 ? '' : 'wide'}" id="bTukar"><b>Tukar shift / libur</b><small>Dengan rekan atau geser liburmu</small></button>`);
     const ket = !info ? 'Jadwal hari ini belum diisi.' : !info.kerja ? 'Hari ini kamu ' + info.nama.toLowerCase() + '.' :
       'Shift ' + st.kode + ' ' + info.mulai + '–' + info.selesai + (info.istirahat ? ', istirahat ' + info.istirahat + ' menit.' : ', tanpa istirahat.');
@@ -851,8 +879,10 @@ function gambarSetuju() {
       const k = apKey(x), on = !!S.apSel[k];
       let det = '';
       if (x.tipe === 'aktivitas') det = `<p>${esc(tglPanjang(x.tanggal))}, ${jam(x.mulai)}–${jam(x.selesai)}: <b>${durTxt(x.menit)}</b></p><p>Pekerjaan: ${esc(x.catatan)}</p>`;
-      else if (x.jenis === 'Tukar' || x.jenis === 'Sakit ke Cuti') det = `<p>${esc(ajuDesc(x))}</p><p>Alasan: ${esc(x.alasan)}</p>${x.jenis === 'Sakit ke Cuti' ? '<p class="muted">Cek sisa cuti staf sebelum menyetujui.</p>' : ''}`;
+      else if (x.jenis === 'Tukar' || x.jenis === 'Sakit ke Cuti') det = `<p>${esc(ajuDesc(x))}</p><p>Alasan: ${esc(x.alasan)}</p>`;
       else if (x.jenis === 'Cuti') det = `<p>${esc(tglPanjang(x.mulai))}${x.selesai !== x.mulai ? ' s/d ' + esc(tglPanjang(x.selesai)) : ''} (${x.hari} hari)</p><p>Alasan: ${esc(x.alasan)}</p>`;
+      if (x.cutiStaf) { const cs = x.cutiStaf, kurang = +x.hari > cs.sisa;
+        det += `<p class="cutiinfo ${kurang ? 'kurang' : ''}">Sisa cuti ${esc(titleCase(x.staf).split(' ')[0])}: <b>${cs.sisa} hari</b> dari ${cs.jatah}${kurang ? ' — kurang dari yang diajukan' : ''}</p>`; }
       else det = `<p>${esc(tglPanjang(x.mulai))}</p><p>Alasan: ${esc(x.alasan)}</p>`;
       return `<div class="appr ${on ? 'sel' : ''}" data-i="${i}">
         <label class="aphead"><input type="checkbox" class="apcb" data-i="${i}" ${on ? 'checked' : ''}>
