@@ -164,6 +164,8 @@
   .cuti>small{color:var(--mute);font-size:13px}
   .cutiinfo{background:#EAF5EE;border-radius:8px;padding:6px 10px}
   .cutiinfo.kurang{background:#FDE7E5;color:#8A1F17}
+  .appr.minta{border:2px solid var(--warn)}
+  .mintabar{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;margin-top:14px;background:#FFF0D6;border:2px solid var(--warn);border-radius:14px;padding:12px 14px;text-align:left;color:#6B3A00}
   .appr.sel{border:2px solid var(--leaf);background:#F3F8F4}
   .aphead{display:flex;align-items:center;gap:10px;cursor:pointer}
   .aphead input{width:22px;height:22px;accent-color:var(--leaf);flex:none}
@@ -246,6 +248,8 @@ function logoutLocal() {
 }
 const myRow = () => S.data && S.data.staff.find(s => norm(s.nama) === norm(S.me.nama));
 const canEditAny = () => S.me && S.me.edit !== 'tidak';
+const isManager = () => S.me && norm(S.me.peran) === 'manager';
+const nMinta = () => (S.st && S.st.permintaanTukar ? S.st.permintaanTukar.length : 0);
 
 /* ===== LOGIN ===== */
 async function renderLogin(err) {
@@ -297,7 +301,8 @@ const ICON = {
 };
 function shell(inner) {
   const tabs = [['saya','Saya'],['absen','Absen'],['tim','Tim']].concat(canEditAny() ? [['setuju','Setujui']] : []).concat([['akun','Akun']]);
-  const badge = k => (k === 'setuju' && S.st && S.st.pending) ? `<span class="badge">${S.st.pending}</span>` : '';
+  const badge = k => (k === 'setuju' && S.st && S.st.pending) ? `<span class="badge">${S.st.pending}</span>`
+    : (k === 'absen' && nMinta()) ? `<span class="badge">${nMinta()}</span>` : '';
   const ab = document.getElementById('apbar'); if (ab) ab.remove();
   $app.innerHTML = `
     <header class="top"><div class="in">
@@ -359,6 +364,7 @@ function viewSaya() {
   let note = '';
   if (info && info.kerja) note = info.istirahat ? `Istirahat ${info.istirahat} menit` : 'Tanpa istirahat, ada jam makan';
   shell(`
+    ${nMinta() ? `<button class="mintabar" id="keMinta"><b>${nMinta()} permintaan tukar menunggu jawabanmu</b><span>Buka ›</span></button>` : ''}
     ${base >= 0 ? `
     <div class="ticket" style="background:${kode && ['P','PI','M','S','SC','L','SK','C'].includes(kode) ? 'var(--' + kode + ')' : '#eee'};${isLight ? 'color:#fff;border-color:var(--L)' : ''}">
       <div class="code">${esc(kode || '–')}</div>
@@ -387,6 +393,7 @@ function viewSaya() {
     }).join('')}</div>
     <div class="soon">Istirahat, jam makan, lembur dan cuti ada di menu Absen.</div>`);
   const bt = document.getElementById('sayaTukar'); if (bt) bt.onclick = pilihTukar;
+  const km = document.getElementById('keMinta'); if (km) km.onclick = () => { S.view = 'absen'; render(); setTimeout(() => { const h = document.getElementById('blokMinta'); if (h) h.scrollIntoView({ block: 'start' }); }, 50); };
 }
 
 /* ===== VIEW: TIM ===== */
@@ -430,8 +437,8 @@ function viewTim() {
           return `<td class="${iso === d.today ? 'today' : ''} ${mode} ${pick ? 'pick' : ''}" ${mode ? `data-m="${mode}" data-n="${esc(s.nama)}" data-t="${iso}" data-k="${esc(s.codes[i])}"` : ''}>${chip(s.codes[i])}</td>`;
         }).join('')}</tr>`).join('')}</tbody>
     </table></div>
-    ${S.me.edit !== 'semua' && !S.reqA ? '<button class="btn" id="timTukar">⇄ Ajukan tukar shift / libur</button><p class="muted">Atau ketuk langsung jadwalmu sendiri (bergaris hijau), lalu pilih sel tujuan.</p>' : ''}
-    ${canEditAny() ? '<p class="muted">Sel bergaris putus-putus bisa kamu ubah. Ketuk untuk mengganti shift atau menukar jadwal.</p><button class="btn ghost" id="toRiwayat">Lihat riwayat perubahan jadwal</button>' : ''}`);
+    ${!isManager() && !S.reqA ? '<button class="btn" id="timTukar">⇄ Ajukan tukar shift / libur</button><p class="muted">Atau ketuk langsung jadwalmu sendiri (bergaris hijau), lalu pilih sel tujuan.</p>' : ''}
+    ${canEditAny() ? '<p class="muted">Sel bergaris putus-putus: ketuk untuk ganti kode langsung, atau usulkan tukar (staf yang terlibat harus menerima dulu).</p><button class="btn ghost" id="toRiwayat">Lihat riwayat perubahan jadwal</button>' : ''}`);
   const tr = document.getElementById('toRiwayat'); if (tr) tr.onclick = () => { S.view = 'riwayat'; render(); };
   const tt = document.getElementById('timTukar'); if (tt) tt.onclick = pilihTukar;
   const qi = document.getElementById('q');
@@ -480,7 +487,7 @@ function sheetUbah(cell) {
     ${alasanHtml()}
     <div class="err" id="sErr"></div>
     <button class="btn" id="sSave">Simpan perubahan</button>
-    <button class="btn ghost" id="sSwap">Tukar dengan sel lain</button>
+    <button class="btn ghost" id="sSwap">Usulkan tukar dengan sel lain</button>
     <button class="btn ghost" id="sClose">Batal</button>`);
   const root = sc.querySelector('.sheet');
   bindAlasan(root);
@@ -488,7 +495,7 @@ function sheetUbah(cell) {
     pilih = b.dataset.k; root.querySelectorAll('.codes button').forEach(x => x.classList.toggle('on', x === b));
   });
   root.querySelector('#sClose').onclick = () => sc.remove();
-  root.querySelector('#sSwap').onclick = () => { sc.remove(); S.swapA = cell; viewTim(); toast('Ketuk sel kedua untuk ditukar'); };
+  root.querySelector('#sSwap').onclick = () => { sc.remove(); S.swapA = cell; viewTim(); toast('Ketuk sel kedua'); };
   root.querySelector('#sSave').onclick = async () => {
     const er = root.querySelector('#sErr'), alasan = root.querySelector('#alasan').value.trim();
     er.textContent = '';
@@ -505,12 +512,13 @@ function sheetUbah(cell) {
 function sheetTukar(a, b) {
   const side = c => `<div class="side"><b>${esc(titleCase(c.nama).split(' ').slice(0, 2).join(' '))}</b><br>${esc(tglPendek(c.tgl))}<br>${chip(c.dari)}</div>`;
   const sc = openSheet(`
-    <h3>Tukar jadwal</h3>
+    <h3>Usulkan tukar jadwal</h3>
     <div class="swapview">${side(a)}<span style="font-size:22px">⇄</span>${side(b)}</div>
     <p class="muted">Setelah ditukar: ${esc(titleCase(a.nama).split(' ')[0])} ${chip(b.dari)} dan ${esc(titleCase(b.nama).split(' ')[0])} ${chip(a.dari)}</p>
+    <div class="note-box" style="margin-top:8px">Jadwal <b>belum berubah</b> sampai ${norm(a.nama) === norm(b.nama) ? esc(titleCase(a.nama).split(' ')[0]) : esc(titleCase(a.nama).split(' ')[0]) + ' dan ' + esc(titleCase(b.nama).split(' ')[0])} menekan Terima di aplikasinya.</div>
     ${alasanHtml()}
     <div class="err" id="sErr"></div>
-    <button class="btn" id="sSave">Tukar jadwal</button>
+    <button class="btn" id="sSave">Kirim usulan ke staf</button>
     <button class="btn ghost" id="sClose">Batal</button>`);
   const root = sc.querySelector('.sheet');
   bindAlasan(root);
@@ -519,11 +527,13 @@ function sheetTukar(a, b) {
     const er = root.querySelector('#sErr'), alasan = root.querySelector('#alasan').value.trim();
     if (a.dari === b.dari) { er.textContent = 'Kedua sel berisi kode yang sama, tidak ada yang ditukar.'; return; }
     if (alasan.length < 3) { er.textContent = 'Isi alasan penukaran.'; return; }
-    const btn = root.querySelector('#sSave'); btn.disabled = true; btn.textContent = 'Menukar…';
+    const btn = root.querySelector('#sSave'); btn.disabled = true; btn.textContent = 'Mengirim…';
     try {
-      await api('tukar', { aNama: a.nama, aTgl: a.tgl, aDari: a.dari, bNama: b.nama, bTgl: b.tgl, bDari: b.dari, alasan });
-      sc.remove(); S.swapA = null; toast('Jadwal ditukar'); boot(true);
-    } catch (e) { er.textContent = e.message; btn.disabled = false; btn.textContent = 'Tukar jadwal'; }
+      const r = await api('tukar', { aNama: a.nama, aTgl: a.tgl, aDari: a.dari, bNama: b.nama, bTgl: b.tgl, bDari: b.dari, alasan });
+      sc.remove(); S.swapA = null;
+      toast(r.dieksekusi ? (r.pesan || 'Jadwal ditukar') : 'Usulan dikirim, menunggu konfirmasi ' + (r.perlu || []).map(n => titleCase(n).split(' ')[0]).join(' & '));
+      boot(true);
+    } catch (e) { er.textContent = e.message; btn.disabled = false; btn.textContent = 'Kirim usulan ke staf'; }
   };
 }
 
@@ -730,9 +740,9 @@ function kirimReqTukar(a, b) {
 }
 /* Tombol "Tukar shift / libur": pilih tanggalmu dulu, lalu lompat ke tab Tim di minggu yang benar */
 function pilihTukar() {
-  if (S.me.edit === 'semua') {
+  if (isManager()) {
     S.view = 'tim'; S.reqA = null; render();
-    toast('Ketuk sel bergaris putus-putus untuk ubah atau tukar langsung');
+    toast('Ketuk sel bergaris putus-putus untuk ubah, atau usulkan tukar');
     return;
   }
   const d = S.data, me = myRow();
@@ -755,13 +765,18 @@ function pilihTukar() {
   });
 }
 function jawabTukar(id, terima) {
-  jalankan('Menyimpan…', () => api('jawabTukar', { id, terima: terima ? '1' : '0' }), terima ? 'Diterima, menunggu atasan' : 'Permintaan ditolak');
+  jalankan('Menyimpan…', async () => {
+    const r = await api('jawabTukar', { id, terima: terima ? '1' : '0' });
+    if (r.dieksekusi) { try { S.data = await api('jadwal'); } catch (e) {} }
+    return r;
+  }, r => r.pesan || (terima ? 'Diterima' : 'Ditolak'));
 }
 function ajuDesc(x) {
   const d = x.detail || {};
   if (x.jenis === 'Tukar') {
     const sendiri = norm(d.rekan) === norm(x.staf);
-    return (sendiri ? 'Geser jadwal: ' : 'Tukar dengan ' + titleCase(d.rekan || '').split(' ')[0] + ': ') +
+    return (d.dariAtasan ? 'Usulan ' + titleCase(d.dariAtasan).split(' ')[0] + ' — ' : '') +
+      (sendiri ? 'Geser jadwal: ' : 'Tukar dengan ' + titleCase(d.rekan || '').split(' ')[0] + ': ') +
       tglPendek(x.mulai) + ' (' + d.aDari + ') ⇄ ' + tglPendek(x.selesai) + ' (' + d.bDari + ')';
   }
   if (x.jenis === 'Sakit ke Cuti') return 'Sakit jadi cuti: ' + (d.tgl || []).map(tglPendek).join(', ');
@@ -807,12 +822,17 @@ function viewAbsen() {
   }
   const live = st.live.slice().sort((x, y) => x.mulai - y.mulai);
   const minta = st.permintaanTukar || [], skc = st.sakitCuti || {};
-  const blokMinta = minta.length ? `<h2>Permintaan tukar untukmu</h2>` + minta.map(x => {
-    const d = x.detail || {};
-    return `<div class="appr"><div class="k">${esc(titleCase(x.staf))} mengajak tukar</div>
-      <p>Kamu: ${esc(tglPanjang(x.selesai))} ${chip(d.bDari)} → jadi ${chip(d.aDari)}</p>
-      <p>${esc(titleCase(x.staf).split(' ')[0])}: ${esc(tglPanjang(x.mulai))} ${chip(d.aDari)} → jadi ${chip(d.bDari)}</p>
-      <p class="muted">Alasan: ${esc(x.alasan)}</p>
+  const blokMinta = minta.length ? `<h2 id="blokMinta">Permintaan tukar untukmu</h2>` + minta.map(x => {
+    const d = x.detail || {}, first = n => esc(titleCase(n || '').split(' ')[0]);
+    const sendiri = norm(d.rekan) === norm(x.staf);
+    // baris "kamu" dan baris orang lain, tergantung kamu di sisi A (pengaju/staf pertama) atau B (rekan)
+    const A = `${esc(tglPanjang(x.mulai))} ${chip(d.aDari)} → jadi ${chip(d.bDari)}`, B = `${esc(tglPanjang(x.selesai))} ${chip(d.bDari)} → jadi ${chip(d.aDari)}`;
+    const judul = d.dariAtasan ? `${first(d.dariAtasan)} (atasan) mengusulkan tukar` : `${esc(titleCase(x.staf))} mengajak tukar`;
+    const baris = sendiri ? `<p>Kamu: ${A}</p><p>Kamu: ${B}</p>`
+      : x.sisi === 'a' ? `<p>Kamu: ${A}</p><p>${first(d.rekan)}: ${B}</p>`
+      : `<p>Kamu: ${B}</p><p>${first(x.staf)}: ${A}</p>`;
+    return `<div class="appr minta"><div class="k">${judul}</div>${baris}
+      <p class="muted">Alasan: ${esc(x.alasan)}${d.dariAtasan && !sendiri ? '. Jadwal berubah setelah kalian berdua menerima.' : ''}</p>
       <div class="two"><button class="btn" data-jt="${esc(x.id)}" data-v="1">Terima</button><button class="btn danger" data-jt="${esc(x.id)}" data-v="0">Tolak</button></div></div>`;
   }).join('') : '';
   const blokSkc = skc.buka && skc.sk && skc.sk.length ? `<h2>Ganti sakit jadi cuti</h2>
