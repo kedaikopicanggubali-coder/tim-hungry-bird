@@ -910,7 +910,9 @@ const apKey = x => x.tipe + ':' + x.id;
 const apJenis = x => x.tipe === 'aktivitas' ? 'Lembur' : x.jenis;
 async function viewSetuju() {
   S.apSel = S.apSel || {}; S.apCat = S.apCat || {};
-  shell('<h2>Menunggu persetujuan</h2><div id="ap" class="loading">Memuat…</div><div id="apm"></div>');
+  shell(`<button class="btn ghost" id="bManual" style="margin-top:14px">+ Input lembur manual</button>
+    <div id="apt"></div><h2>Menunggu persetujuan</h2><div id="ap" class="loading">Memuat…</div><div id="apm"></div>`);
+  document.getElementById('bManual').onclick = sheetLemburManual;
   await muatSetuju();
   S.poll = setInterval(() => {
     if (S.view !== 'setuju' || document.querySelector('.scrim,#busy') || document.activeElement && document.activeElement.classList.contains('cat')) return;
@@ -925,9 +927,12 @@ async function muatSetuju(diam) {
   list = Array.isArray(r) ? r : (r.list || []);
   S.apMenunggu = Array.isArray(r) ? [] : (r.menungguStaf || []);
   try { gambarMenunggu(); } catch (e) { console.error(e); }
+  S.apTertinggal = Array.isArray(r) ? [] : (r.tertinggal || []);
+  S.apLemburCek = Array.isArray(r) ? 0 : (+r.lemburCek || 0);
+  try { gambarTertinggal(); } catch (e) { console.error(e); }
   const ada = {}; list.forEach(x => ada[apKey(x)] = 1);
   Object.keys(S.apSel).forEach(k => { if (!ada[k]) { delete S.apSel[k]; delete S.apCat[k]; } }); // yang sudah diputuskan orang lain dibuang
-  if (S.st) S.st.pending = list.length;
+  if (S.st) S.st.pending = list.length + S.apTertinggal.length;
   S.apList = list;
   try { gambarSetuju(); }
   catch (e) {
@@ -951,7 +956,13 @@ function gambarSetuju() {
     ${list.map((x, i) => {
       const k = apKey(x), on = !!S.apSel[k];
       let det = '';
-      if (x.tipe === 'aktivitas') det = `<p>${esc(tglPanjang(x.tanggal))}, ${jam(x.mulai)}–${jam(x.selesai)}: <b>${durTxt(x.menit)}</b></p><p>Pekerjaan: ${esc(x.catatan)}</p>`;
+      if (x.tipe === 'aktivitas') {
+        const panjang = S.apLemburCek && x.menit > S.apLemburCek * 60;
+        det = `<p>${esc(tglPanjang(x.tanggal))}, ${jam(x.mulai)}–${jam(x.selesai)}${toDate(x.tanggal).getDate() !== new Date(x.selesai).getDate() ? ' (besoknya)' : ''}: <b>${durTxt(x.menit)}</b></p><p>Pekerjaan: ${esc(x.catatan)}</p>
+          ${panjang ? `<p class="batas">Lebih dari ${S.apLemburCek} jam. Cek dulu, mungkin lupa tap selesai.</p>` : ''}
+          ${x.dikoreksiOleh ? `<p class="muted">Dikoreksi ${esc(titleCase(x.dikoreksiOleh))}${x.menitAsli != null ? ' (asli ' + durTxt(x.menitAsli) + ')' : ''}: ${esc(x.alasanKoreksi)}</p>` : ''}
+          <button class="btn ghost" data-kx="${i}" style="margin-top:8px">Koreksi jam selesai</button>`;
+      }
       else if (x.jenis === 'Tukar' || x.jenis === 'Sakit ke Cuti') det = `<p>${esc(ajuDesc(x))}</p><p>Alasan: ${esc(x.alasan)}</p>`;
       else if (x.jenis === 'Cuti') det = `<p>${esc(tglPanjang(x.mulai))}${x.selesai !== x.mulai ? ' s/d ' + esc(tglPanjang(x.selesai)) : ''} (${x.hari} hari)</p><p>Alasan: ${esc(x.alasan)}</p>`;
       else det = `<p>${esc(tglPanjang(x.mulai))}</p><p>Alasan: ${esc(x.alasan)}</p>`;   // Tidak Istirahat
@@ -975,6 +986,7 @@ function gambarSetuju() {
     const k = apKey(list[+cb.dataset.i]); if (cb.checked) S.apSel[k] = 1; else delete S.apSel[k]; gambarSetuju();
   });
   el.querySelectorAll('.cat').forEach(inp => inp.oninput = () => { S.apCat[apKey(list[+inp.dataset.i])] = inp.value; });
+  el.querySelectorAll('[data-kx]').forEach(b => b.onclick = () => sheetKoreksi(list[+b.dataset.kx]));
   el.querySelectorAll('[data-pilih]').forEach(b => b.onclick = () => {
     const j = b.dataset.pilih;
     if (j === '__all') { const semua = nSel === list.length; S.apSel = {}; if (!semua) list.forEach(x => S.apSel[apKey(x)] = 1); }
@@ -1035,6 +1047,125 @@ function hasilSetuju(r) {
   sc.querySelector('#hOk').onclick = () => sc.remove();
 }
 
+/* ===== KOREKSI & INPUT LEMBUR MANUAL (atasan) ===== */
+/* Aktivitas yang lupa ditutup staf (masih berjalan terlalu lama / dari hari sebelumnya). */
+function gambarTertinggal() {
+  const el = document.getElementById('apt'); if (!el) return;
+  const t = S.apTertinggal || [];
+  el.innerHTML = !t.length ? '' : `<h2>Lupa tap selesai</h2>
+    <p class="muted" style="margin:0 0 8px">Masih berjalan terlalu lama. Selama belum ditutup, staf tidak bisa mulai istirahat/lembur berikutnya.</p>
+    ${t.map((x, i) => `<div class="appr"><div class="k">${esc(x.jenis)}: ${esc(titleCase(x.staf))}</div>
+      <p>Mulai ${esc(tglPanjang(x.tanggal))} jam ${jam(x.mulai)}, sudah berjalan <b>${durTxt(Math.floor((nowMs() - x.mulai) / 60000))}</b></p>
+      ${x.catatan ? `<p>Pekerjaan: ${esc(x.catatan)}</p>` : ''}
+      <button class="btn" data-tt="${i}" style="margin-top:8px">Tutup &amp; isi jam selesai</button></div>`).join('')}`;
+  el.querySelectorAll('[data-tt]').forEach(b => b.onclick = () => sheetKoreksi(t[+b.dataset.tt]));
+}
+
+/** Jam selesai "HH:mm" → ms, mengikuti tanggal jam mulai; lewat tengah malam = besoknya. */
+function kxAkhir(mulaiMs, hhmm) {
+  if (!/^\d{1,2}:\d{2}$/.test(hhmm || '')) return 0;
+  const d = new Date(mulaiMs), [h, m] = hhmm.split(':').map(Number);
+  d.setHours(h, m, 0, 0);
+  if (d.getTime() <= mulaiMs) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+
+function sheetKoreksi(x) {
+  x = Object.assign({ jenis: 'Lembur' }, x, { jenis: x.jenis || 'Lembur' });
+  const berjalan = x.status === 'Berjalan' || !x.selesai;
+  const batas = berjalan ? nowMs() : (typeof x.selesaiAsli === 'number' && x.selesaiAsli ? x.selesaiAsli : x.selesai);
+  const bisaSetujui = x.jenis === 'Lembur' && x.approval === 'Menunggu';
+  const sc = openSheet(`<h3>${berjalan ? 'Tutup' : 'Koreksi'} ${esc(x.jenis.toLowerCase())}: ${esc(titleCase(x.staf))}</h3>
+    <p class="muted">Mulai ${esc(tglPanjang(x.tanggal))} jam ${jam(x.mulai)}${berjalan ? ', belum ditutup' : ', tercatat selesai ' + jam(x.selesai) + ' (' + durTxt(x.menit) + ')'}.</p>
+    <label class="field"><span>Jam selesai yang benar</span><input id="kxJam" type="time" value="${berjalan ? '' : jam(x.selesai)}"></label>
+    <div class="note-box" id="kxPrev">Isi jam selesai.</div>
+    <label class="field"><span>Alasan koreksi (wajib)</span>
+      <div class="quick">${['Lupa tap selesai', 'Salah jam', 'Selesai lebih awal'].map(a => `<button type="button" data-a="${a}">${a}</button>`).join('')}</div>
+      <textarea id="alasan" rows="2" style="margin-top:8px" placeholder="Contoh: lupa tap, lembur selesai 19.30 sesuai info supervisor"></textarea></label>
+    ${bisaSetujui ? '<label class="row" style="gap:10px;justify-content:flex-start"><input type="checkbox" id="kxOk" checked> <span>Langsung setujui setelah dikoreksi</span></label>' : ''}
+    <p class="muted">Koreksi hanya boleh memendekkan durasi. Jam asli tetap tersimpan dan tercatat di Riwayat.</p>
+    <div class="err" id="kxErr"></div>
+    <button class="btn" id="kxYa">${bisaSetujui ? 'Simpan koreksi' : 'Simpan'}</button>
+    <button class="btn ghost" id="kxNo">Batal</button>`);
+  const root = sc.querySelector('.sheet'), q = s => root.querySelector(s);
+  bindAlasan(root);
+  const prev = () => {
+    const a = kxAkhir(x.mulai, q('#kxJam').value);
+    if (!a) { q('#kxPrev').textContent = 'Isi jam selesai.'; return 0; }
+    const m = Math.floor((a - x.mulai) / 60000), lewat = a > batas;
+    q('#kxPrev').innerHTML = `Durasi baru: <b>${durTxt(m)}</b>${new Date(a).getDate() !== new Date(x.mulai).getDate() ? ' (selesai besoknya)' : ''}` +
+      (lewat ? `<br><span style="color:#8A1F17">Melewati jam ${berjalan ? 'sekarang' : 'tercatat (' + jam(batas) + ')'}. Kalau lembur memang lebih lama, pakai Input lembur manual.</span>` : '');
+    return lewat ? 0 : a;
+  };
+  q('#kxJam').oninput = prev; prev();
+  q('#kxNo').onclick = () => sc.remove();
+  q('#kxYa').onclick = async () => {
+    q('#kxErr').textContent = '';
+    const alasan = q('#alasan').value.trim();
+    if (!prev()) { q('#kxErr').textContent = 'Jam selesai belum benar.'; return; }
+    if (alasan.length < 3) { q('#kxErr').textContent = 'Isi alasan koreksi.'; return; }
+    busy('Menyimpan koreksi…');
+    try {
+      const r = await api('koreksiAktivitas', { id: x.id, jam: q('#kxJam').value, alasan, setujui: bisaSetujui && q('#kxOk').checked ? '1' : '0' });
+      sc.remove(); busy(false); toast(r.pesan || 'Koreksi tersimpan'); S.audit = null;
+      try { await refreshStatus(); } catch (e) {}
+      await muatSetuju(true);
+    } catch (e) { busy(false); q('#kxErr').textContent = e.message; }
+  };
+}
+
+async function sheetLemburManual() {
+  if (!S.data) { busy('Memuat…'); try { S.data = await api('jadwal'); } catch (e) { busy(false); showError(e.message); return; } busy(false); }
+  const staf = S.data.staff.filter(s => s.editable || (isManager() && norm(s.nama) === norm(S.me.nama)))
+    .sort((a, b) => a.nama.localeCompare(b.nama));
+  if (!staf.length) { showError('Tidak ada staf yang bisa kamu catat lemburnya.'); return; }
+  const t = (S.st && S.st.today) || new Date().toISOString().slice(0, 10);
+  const min = (d => d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2))(new Date(toDate(t).getTime() - 31 * 864e5));
+  const sc = openSheet(`<h3>Input lembur manual</h3>
+    <p class="muted">Untuk lembur yang tidak sempat tercatat di aplikasi. Langsung berstatus disetujui dan tercatat di Riwayat.</p>
+    <label class="field"><span>Staf</span><select id="lmS"><option value="">Pilih staf…</option>
+      ${staf.map(s => `<option value="${esc(s.nama)}">${esc(titleCase(s.nama))}${s.posisi ? ' · ' + esc(s.posisi) : ''}</option>`).join('')}</select></label>
+    <label class="field"><span>Tanggal</span><input id="lmT" type="date" min="${min}" max="${t}" value="${t}"></label>
+    <div class="two"><label class="field"><span>Mulai</span><input id="lmM" type="time"></label>
+      <label class="field"><span>Selesai</span><input id="lmE" type="time"></label></div>
+    <div class="note-box" id="lmPrev">Isi jam mulai dan selesai.</div>
+    <label class="field"><span>Pekerjaan lembur</span><input id="lmK" placeholder="Contoh: general cleaning bar"></label>
+    <label class="field"><span>Alasan input manual (wajib)</span>
+      <div class="quick">${['Tombol lembur tidak muncul', 'HP mati / tidak ada sinyal', 'Lupa tap mulai'].map(a => `<button type="button" data-a="${a}">${a}</button>`).join('')}</div>
+      <textarea id="alasan" rows="2" style="margin-top:8px"></textarea></label>
+    <div class="err" id="lmErr"></div>
+    <button class="btn" id="lmYa">Simpan lembur</button>
+    <button class="btn ghost" id="lmNo">Batal</button>`);
+  const root = sc.querySelector('.sheet'), q = s => root.querySelector(s);
+  bindAlasan(root);
+  const prev = () => {
+    const tg = q('#lmT').value, m = q('#lmM').value, e = q('#lmE').value;
+    if (!tg || !m || !e) { q('#lmPrev').textContent = 'Isi jam mulai dan selesai.'; return 0; }
+    const [h, mi] = m.split(':').map(Number), a = toDate(tg); a.setHours(h, mi, 0, 0);
+    const b = kxAkhir(a.getTime(), e), menit = Math.floor((b - a.getTime()) / 60000);
+    q('#lmPrev').innerHTML = `Durasi: <b>${durTxt(menit)}</b>${new Date(b).getDate() !== a.getDate() ? ' (selesai besoknya)' : ''}` +
+      (b > nowMs() ? '<br><span style="color:#8A1F17">Jam selesai belum lewat.</span>' : '');
+    return b > nowMs() ? 0 : menit;
+  };
+  ['#lmT', '#lmM', '#lmE'].forEach(s => q(s).oninput = prev);
+  q('#lmNo').onclick = () => sc.remove();
+  q('#lmYa').onclick = async () => {
+    q('#lmErr').textContent = '';
+    const data = { staf: q('#lmS').value, tgl: q('#lmT').value, mulai: q('#lmM').value, selesai: q('#lmE').value,
+                   pekerjaan: q('#lmK').value.trim(), alasan: q('#alasan').value.trim() };
+    if (!data.staf) { q('#lmErr').textContent = 'Pilih staf.'; return; }
+    if (!prev()) { q('#lmErr').textContent = 'Jam belum benar.'; return; }
+    if (data.pekerjaan.length < 3) { q('#lmErr').textContent = 'Isi pekerjaan lembur.'; return; }
+    if (data.alasan.length < 3) { q('#lmErr').textContent = 'Isi alasan input manual.'; return; }
+    busy('Menyimpan…');
+    try {
+      const r = await api('lemburManual', data);
+      sc.remove(); busy(false); toast(r.pesan || 'Lembur tersimpan'); S.audit = null;
+      if (S.view === 'setuju') await muatSetuju(true);
+    } catch (e) { busy(false); q('#lmErr').textContent = e.message; }
+  };
+}
+
 /* ===== VIEW: RIWAYAT ===== */
 async function viewRiwayat() {
   shell('<h2>Riwayat perubahan</h2><div id="logs" class="loading">Memuat…</div>');
@@ -1044,7 +1175,7 @@ async function viewRiwayat() {
     el.className = '';
     el.innerHTML = S.audit.length ? S.audit.map(l => `<div class="log">
       <div class="h"><span>${esc(l.waktu)}</span><span>${esc(l.aksi)} oleh ${esc(titleCase(l.oleh))}</span></div>
-      <div class="b">${esc(titleCase(l.staf))}, ${esc(/^\d{4}-/.test(l.tgl) ? tglPendek(l.tgl) : l.tgl)}: ${chip(l.dari)} → ${chip(l.ke)}</div>
+      <div class="b">${esc(titleCase(l.staf))}, ${esc(/^\d{4}-/.test(l.tgl) ? tglPendek(l.tgl) : l.tgl)}: ${/^(Koreksi|Lembur manual)/.test(l.aksi) ? esc(l.dari) + ' → <b>' + esc(l.ke) + '</b>' : chip(l.dari) + ' → ' + chip(l.ke)}</div>
       <div class="a">${esc(l.alasan)}</div></div>`).join('') : '<p class="muted">Belum ada perubahan jadwal.</p>';
   } catch (e) { const el = document.getElementById('logs'); if (el) el.textContent = e.message; }
 }
